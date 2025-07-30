@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { supabase } from "../utils/hooks/supabase";
 
 import * as Location from "expo-location";
 
@@ -29,6 +30,19 @@ export default function MapScreen({ navigation }) {
     longitudeDelta: 0.0421,
   });
 
+    const fetchData = async () => {
+    try {
+      const { data, error } = await supabase.from("resource_locations").select("*");
+      if (error) {
+        console.error("Error fetching data:", error);
+      } else {
+        console.log("Fetched data:", data);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -45,6 +59,7 @@ export default function MapScreen({ navigation }) {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       });
+      fetchData();
     })();
   }, []);
 
