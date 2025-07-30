@@ -1,0 +1,41 @@
+{
+  "name": "snapchatstarter",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-navigation/bottom-tabs": "^7.4.2",
+    "@react-navigation/native": "^7.1.14",
+    "@react-navigation/stack": "^7.4.2",
+    "@rn-vui/base": "^5.1.8",
+    "@rn-vui/themed": "^5.1.8",
+    "@supabase/supabase-js": "^2.52.0",
+    "expo": "~53.0.20",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-get-random-values": "~1.11.0",
+    "react-native-gifted-chat": "2.6.5",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "react-native-maps": "1.20.1",
+    "expo-location": "~18.1.6",
+    "expo-camera": "~16.1.11",
+    "expo-media-library": "~17.1.7",
+    "expo-sharing": "~13.1.5",
+    "expo-image-picker": "~16.1.4",
+    "react-native-svg": "15.11.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0"
+  },
+  "private": true
+}
