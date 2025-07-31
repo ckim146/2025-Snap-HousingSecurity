@@ -8,11 +8,12 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../utils/hooks/supabase";
-
+import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -30,9 +31,11 @@ export default function MapScreen({ navigation }) {
     longitudeDelta: 0.0421,
   });
 
-    const fetchData = async () => {
+  const fetchData = async () => {
     try {
-      const { data, error } = await supabase.from("resource_locations").select("*");
+      const { data, error } = await supabase
+        .from("resource_locations")
+        .select("*");
       if (error) {
         console.error("Error fetching data:", error);
       } else {
@@ -121,6 +124,31 @@ export default function MapScreen({ navigation }) {
             </View>
           </View>
         </View>
+      </View>
+      <View
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: TAB_BAR_PADDING,
+        }}
+      >
+        <ScrollView
+          horizontal
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          style={{
+            backgroundColor: "white",
+            paddingVertical: 10,
+            maxHeight: 60, // <- ensure there's some height
+          }}
+        >
+          <Pressable style={styles.pivot} onPress={()=>{}}>
+            <Text style={styles.text}>Pivot</Text>
+          </Pressable>
+          <Pressable style={styles.pivot} onPress={()=>{}}>
+            <Text style={styles.text}>Pivot 2</Text>
+          </Pressable>
+        </ScrollView>
       </View>
     </View>
   );
@@ -213,4 +241,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   calendarIcon: {},
+  pivot: {
+    // width: 30,
+    // height: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "lightgray",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
 });
