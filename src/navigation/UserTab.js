@@ -29,6 +29,7 @@ import { colors } from "../../assets/themes/colors";
 import Ionicons from "react-native-vector-icons/Ionicons";
 
 const Tab = createBottomTabNavigator();
+export const TAB_BAR_PADDING = 16;
 
 export default function UserStack({ route, navigation }) {
   // Sign-out logic using Supabase
@@ -140,8 +141,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     width: "100%",
     backgroundColor: "white",
-    borderRadius: 24,
-    padding: 16,
+    borderRadius: 0,
+    padding: TAB_BAR_PADDING ,
+    borderTopWidth: 1,
+    borderTopColor: "#ccc",
     bottom: 0,
   },
   grayRectangle: {

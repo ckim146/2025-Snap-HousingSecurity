@@ -8,19 +8,24 @@ import {
   Text,
   TouchableOpacity,
   Pressable,
+  ScrollView,
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { supabase } from "../utils/hooks/supabase";
+import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { Button } from "@rn-vui/base";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [homeBaseMode, setHomeBaseMode] = useState(false);
 
   const [currentRegion, setCurrentRegion] = useState({
     latitude: 34.0211573,
@@ -28,6 +33,83 @@ export default function MapScreen({ navigation }) {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+
+  const defaultPivotCategories = [
+    {
+      title: "Memories",
+      icon: "images-outline",
+    },
+    {
+      title: "Visited",
+      icon: "checkmark-circle-outline",
+    },
+    {
+      title: "Popular",
+      icon: "flame-outline",
+    },
+    {
+      title: "Favorites",
+      icon: "heart-outline",
+    },
+    {
+      title: "Restaurants",
+      icon: "restaurant-outline",
+    },
+    {
+      title: "Cafes",
+      icon: "cafe-outline",
+    },
+    {
+      title: "Parks",
+      icon: "leaf-outline",
+    },
+    {
+      title: "Shops",
+      icon: "cart-outline",
+    },
+  ];
+
+  const homeBasePivotCategories = [
+    {
+      title: "Shelters",
+      icon: "home-outline",
+    },
+    {
+      title: "Showers",
+      icon: "water-outline",
+    },
+    {
+      title: "Parking",
+      icon: "car-outline",
+    },
+    {
+      title: "Bathrooms",
+      icon: "male-female-outline",
+    },
+    {
+      title: "Food",
+      icon: "restaurant-outline",
+    },
+    {
+      title: "Clothing",
+      icon: "shirt-outline",
+    },
+  ];
+
+  const fetchData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("resource_locations")
+        .select("*");
+      if (error) {
+        console.error("Error fetching data:", error);
+      } else {
+        console.log("Fetched data:", data);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -38,6 +120,7 @@ export default function MapScreen({ navigation }) {
       }
 
       let location = await Location.getCurrentPositionAsync({});
+      console.log("Location:", location);
       setLocation(location);
       setCurrentRegion({
         latitude: location.coords.latitude,
@@ -45,6 +128,8 @@ export default function MapScreen({ navigation }) {
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
       });
+      fetchData();
+      console.log("tabBarHeight:", tabBarHeight, "insets.bottom:", insets.bottom);
     })();
   }, []);
 
@@ -52,7 +137,15 @@ export default function MapScreen({ navigation }) {
   text = JSON.stringify(location);
 
   return (
-    <View style={[styles.container, { marginBottom: tabBarHeight }]}>
+    <SafeAreaView style={{ flex: 1 }}>
+    <View
+      style={[
+        styles.container,
+        {
+          /*marginBottom: tabBarHeight*/
+        },
+      ]}
+    >
       <MapView
         style={styles.map}
         region={currentRegion}
@@ -60,7 +153,14 @@ export default function MapScreen({ navigation }) {
         showsMyLocationButton={true}
       />
 
-      <View style={[styles.mapFooter]}>
+      <View style={styles.homeBaseToggleButton}>
+        <Button
+          title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
+          onPress={() => setHomeBaseMode(!homeBaseMode)}
+        />
+      </View>
+
+      <View style={[styles.mapFooter, { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING }]}>
         <View style={styles.locationContainer}>
           <TouchableOpacity
             style={[styles.userLocation, styles.shadow]}
@@ -106,8 +206,30 @@ export default function MapScreen({ navigation }) {
             </View>
           </View>
         </View>
+                <ScrollView
+          horizontal
+          contentContainerStyle={{ paddingHorizontal: 20 }}
+          style={styles.pivotScrollView}
+        >
+          {(homeBaseMode
+            ? homeBasePivotCategories
+            : defaultPivotCategories
+          ).map((pivot) => (
+            <Pressable
+              style={styles.pivot}
+              onPress={() => {
+                console.log(`Pivot: ${pivot.title}`);
+              }}
+            >
+              <Ionicons name={pivot.icon} size={20} color="black" />
+              <Text style={styles.pivotText}>{pivot.title}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
-    </View>
+
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -115,27 +237,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+    // alignItems: "center",
+    // justifyContent: "center",
+    // position: "relative",
   },
   mapFooter: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingBottom: 20,
-    bottom: 0,
+position: "absolute",
+
+  // bottom: TAB_BAR_PADDING,
+  left: 0,
+  right: 0,
+  zIndex: 5,
+  backgroundColor: "transparent",
+  // paddingBottom: 10,
   },
   map: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    // width: Dimensions.get("window").width,
+    // height: Dimensions.get("window").height,
+    width: "100%",
+    height: "100%",
+    flex: 1,
   },
   locationContainer: {
     backgroundColor: "transparent",
     width: "100%",
-    paddingBottom: 8,
+    // paddingBottom: 8,
     alignItems: "center",
   },
   userLocation: {
@@ -158,11 +284,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   bitmojiContainer: {
+    flexDirection: "row",
+    marginBottom: 8,
     width: "100%",
     backgroundColor: "transparent",
-    flexDirection: "row",
     justifyContent: "space-between",
-    paddingBottom: 20,
     paddingHorizontal: 20,
   },
   myBitmoji: {
@@ -198,4 +324,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   calendarIcon: {},
+  pivot: {
+    // width: 30,
+    // height: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "lightgray",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    flexDirection: "row",
+  },
+  pivotScrollView: {
+    backgroundColor: "white",
+    paddingVertical: 10,
+    maxHeight: 60,
+  },
+  pivotText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "black",
+  },
+  homeBaseToggleButton: {
+    position: "absolute",
+    top: 50,
+    left: 10,
+    backgroundColor: "white",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    margin: 10,
+    alignSelf: "flex-start",
+    zIndex: 10,
+  },
 });
