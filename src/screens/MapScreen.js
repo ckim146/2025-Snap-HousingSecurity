@@ -17,12 +17,14 @@ import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { Button } from "@rn-vui/base";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [homeBaseMode, setHomeBaseMode] = useState(false);
 
   const [currentRegion, setCurrentRegion] = useState({
     latitude: 34.0211573,
@@ -30,6 +32,68 @@ export default function MapScreen({ navigation }) {
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   });
+
+  const defaultPivotCategories = [
+    {
+      title: "Memories",
+      icon: "images-outline",
+    },
+    {
+      title: "Visited",
+      icon: "checkmark-circle-outline",
+    },
+    {
+      title: "Popular",
+      icon: "flame-outline",
+    },
+    {
+      title: "Favorites",
+      icon: "heart-outline",
+    },
+    {
+      title: "Restaurants",
+      icon: "restaurant-outline",
+    },
+    {
+      title: "Cafes",
+      icon: "cafe-outline",
+    },
+    {
+      title: "Parks",
+      icon: "leaf-outline",
+    },
+    {
+      title: "Shops",
+      icon: "cart-outline",
+    },
+  ];
+
+  const homeBasePivotCategories = [
+    {
+      title: "Shelters",
+      icon: "home-outline",
+    },
+    {
+      title: "Showers",
+      icon: "water-outline",
+    },
+    {
+      title: "Parking",
+      icon: "car-outline",
+    },
+    {
+      title: "Bathrooms",
+      icon: "male-female-outline",
+    },
+    {
+      title: "Food",
+      icon: "restaurant-outline",
+    },
+    {
+      title: "Clothing",
+      icon: "shirt-outline",
+    },
+  ];
 
   const fetchData = async () => {
     try {
@@ -55,6 +119,7 @@ export default function MapScreen({ navigation }) {
       }
 
       let location = await Location.getCurrentPositionAsync({});
+      console.log("Location:", location);
       setLocation(location);
       setCurrentRegion({
         latitude: location.coords.latitude,
@@ -105,6 +170,18 @@ export default function MapScreen({ navigation }) {
             </View>
           </Pressable>
 
+          <Button
+          title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
+          onPress={() => setHomeBaseMode(!homeBaseMode)}
+          style={{
+            backgroundColor: homeBaseMode ? "red" : "green",
+            borderRadius: 20,
+            padding: 10,
+            alignItems: "center",
+            justifyContent: "center",
+            marginHorizontal: 20,
+          }} />
+
           <View style={styles.places}>
             <Image
               style={styles.bitmojiImage}
@@ -131,23 +208,26 @@ export default function MapScreen({ navigation }) {
           left: 0,
           right: 0,
           bottom: TAB_BAR_PADDING,
+          height: 60,
         }}
       >
+        
         <ScrollView
           horizontal
           contentContainerStyle={{ paddingHorizontal: 20 }}
-          style={{
-            backgroundColor: "white",
-            paddingVertical: 10,
-            maxHeight: 60, // <- ensure there's some height
-          }}
+          style={styles.pivotScrollView}
         >
-          <Pressable style={styles.pivot} onPress={()=>{}}>
-            <Text style={styles.text}>Pivot</Text>
-          </Pressable>
-          <Pressable style={styles.pivot} onPress={()=>{}}>
-            <Text style={styles.text}>Pivot 2</Text>
-          </Pressable>
+          {(homeBaseMode ? homeBasePivotCategories : defaultPivotCategories).map((pivot) => (
+            <Pressable
+              style={styles.pivot}
+              onPress={() => {
+                console.log(`Pivot: ${pivot.title}`);
+              }}
+            >
+              <Ionicons name={pivot.icon} size={20} color="black" />
+              <Text style={styles.pivotText}>{pivot.title}</Text>
+            </Pressable>
+          ))}
         </ScrollView>
       </View>
     </View>
@@ -165,11 +245,10 @@ const styles = StyleSheet.create({
     width: "100%",
     display: "flex",
     flexDirection: "column",
-    position: "absolute",
-    alignItems: "center",
+    // position: "absolute",
+    // alignItems: "center",
     justifyContent: "center",
-    paddingBottom: 20,
-    bottom: 0,
+    bottom: TAB_BAR_PADDING + 140,
   },
   map: {
     width: Dimensions.get("window").width,
@@ -207,6 +286,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 20,
     paddingHorizontal: 20,
+    marginBottom: TAB_BAR_PADDING + 20,
   },
   myBitmoji: {
     width: 70,
@@ -251,5 +331,16 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     marginHorizontal: 5,
+    flexDirection: "row",
+  },
+  pivotScrollView: {
+    backgroundColor: "white",
+    paddingVertical: 10,
+    maxHeight: 60,
+  },
+  pivotText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "black",
   },
 });
