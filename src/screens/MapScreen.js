@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
-import {LocationCard} from "../components/LocationCard";
+import { LocationCard } from "../components/LocationCard";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -29,6 +29,7 @@ export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [homeBaseMode, setHomeBaseMode] = useState(false);
+  const [markerLocations, setMarkerLocations] = useState([]);
 
   const [currentRegion, setCurrentRegion] = useState({
     latitude: 34.0211573,
@@ -107,7 +108,18 @@ export default function MapScreen({ navigation }) {
       if (error) {
         console.error("Error fetching data:", error);
       } else {
-        console.log("Fetched data:", data);
+        console.log("Fetched data:", data[0]);
+        for (const item of data) {
+          setMarkerLocations((prev) => [
+            {
+              latitude: item.location.latitude,
+              longitude: item.location.longitude,
+              title: item.title,
+              description: item.description,
+              id: item.id,
+            },
+          ]);
+        }
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -132,7 +144,6 @@ export default function MapScreen({ navigation }) {
         longitudeDelta: 0.0421,
       });
       fetchData();
-      console.log("tabBarHeight:", tabBarHeight, "insets.bottom:", insets.bottom);
     })();
   }, []);
 
@@ -141,106 +152,118 @@ export default function MapScreen({ navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-    <View
-      style={[
-        styles.container,
-        {
-          position: "absolute",
-        },
-      ]}
-    >
-      <MapView
-        style={styles.map}
-        region={currentRegion}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
+      <View style={styles.container}>
+        <MapView
+          style={styles.map}
+          region={currentRegion}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+          onPress={(e) => {
+            console.log("Map pressed at:", e.nativeEvent.coordinate);
+          }}
         >
-         {/* adding markers to the map */}
-        {markers.map((marker, index) => (
-                    <Marker key={index} coordinate={marker} onPress={() => onMarkerSelected(marker)}>
-                      <View style={styles.iconWrapper}>
-      <Ionicons name="location-sharp" size={30} color="#FF5733" />
-    </View>
-                    </Marker>
-                  ))}
-      </MapView>
-
-      <View style={styles.homeBaseToggleButton}>
-        <Button
-          title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
-          onPress={() => setHomeBaseMode(!homeBaseMode)}
-        />
-      </View>
-
-      <View style={[styles.mapFooter, { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING }]}>
-        <View style={styles.locationContainer}>
-          <TouchableOpacity
-            style={[styles.userLocation, styles.shadow]}
-            onPress={() => {
-              console.log("Go to user location!");
-              const { latitude, longitude } = location.coords;
-              setCurrentRegion({ ...currentRegion, latitude, longitude });
-            }}
-          >
-            <Ionicons name="navigate" size={15} color="black" />
-          </TouchableOpacity>
-        </View>
-        <View style={[styles.bitmojiContainer, styles.shadow]}>
-          <Pressable
-            onPress={() => {
-              navigation.navigate("GhostPins");
-            }}
-          >
-            {/* starter code */}
-            <View style={styles.myBitmoji}>
-              <Ionicons name="calendar-outline" size={50} color="gray" />
-              <View style={styles.bitmojiTextContainer}>
-                <Text style={styles.bitmojiText}>Events</Text>
+          {/* adding markers to the map */}
+          {markerLocations.map((marker, index) => (
+            <Marker
+              key={marker.id}
+              coordinate={{latitude: marker.latitude, longitude: marker.longitude}}
+              onPress={() => console.log("Marker pressed:", marker.title)}
+            >
+              <View style={styles.iconWrapper}>
+                <Ionicons name="location-sharp" size={30} color="#FF5733" />
               </View>
-            </View>
-          </Pressable>
+            </Marker>
+          ))}
+        </MapView>
 
-          <View style={styles.places}>
-            <Image
-              style={styles.bitmojiImage}
-              source={require("../../assets/snapchat/personalBitmoji.png")}
-            />
-            <View style={styles.bitmojiTextContainer}>
-              <Text style={styles.bitmojiText}>Places</Text>
-            </View>
-          </View>
-          <View style={styles.myFriends}>
-            <Image
-              style={styles.bitmojiImage}
-              source={require("../../assets/snapchat/personalBitmoji.png")}
-            />
-            <View style={styles.bitmojiTextContainer}>
-              <Text style={styles.bitmojiText}>Friends</Text>
-            </View>
-          </View>
+        <View style={styles.homeBaseToggleButton}>
+          <Button
+            title={
+              homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"
+            }
+            onPress={() => setHomeBaseMode(!homeBaseMode)}
+          />
         </View>
-                <ScrollView
-          horizontal
-          contentContainerStyle={{ paddingHorizontal: 20 }}
-          style={styles.pivotScrollView}
+
+        <View
+          style={[
+            styles.mapFooter,
+            { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING },
+          ]}
         >
-          {(homeBaseMode
-            ? homeBasePivotCategories
-            : defaultPivotCategories
-          ).map((pivot) => (
-            <Pressable
-              style={styles.pivot}
+          <View style={styles.locationContainer}>
+            <TouchableOpacity
+              style={[styles.userLocation, styles.shadow]}
               onPress={() => {
-                console.log(`Pivot: ${pivot.title}`);
+                console.log("Go to user location!");
+                const { latitude, longitude } = location.coords;
+                setCurrentRegion({
+                  ...currentRegion,
+                  latitude,
+                  longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                });
               }}
             >
-              <Ionicons name={pivot.icon} size={20} color="black" />
-              <Text style={styles.pivotText}>{pivot.title}</Text>
+              <Ionicons name="navigate" size={15} color="black" />
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.bitmojiContainer, styles.shadow]}>
+            <Pressable
+              onPress={() => {
+                navigation.navigate("GhostPins");
+              }}
+            >
+              {/* starter code */}
+              <View style={styles.myBitmoji}>
+                <Ionicons name="calendar-outline" size={50} color="gray" />
+                <View style={styles.bitmojiTextContainer}>
+                  <Text style={styles.bitmojiText}>Events</Text>
+                </View>
+              </View>
             </Pressable>
-          ))}
-        </ScrollView>
-      </View>
 
+            <View style={styles.places}>
+              <Image
+                style={styles.bitmojiImage}
+                source={require("../../assets/snapchat/personalBitmoji.png")}
+              />
+              <View style={styles.bitmojiTextContainer}>
+                <Text style={styles.bitmojiText}>Places</Text>
+              </View>
+            </View>
+            <View style={styles.myFriends}>
+              <Image
+                style={styles.bitmojiImage}
+                source={require("../../assets/snapchat/personalBitmoji.png")}
+              />
+              <View style={styles.bitmojiTextContainer}>
+                <Text style={styles.bitmojiText}>Friends</Text>
+              </View>
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            style={styles.pivotScrollView}
+          >
+            {(homeBaseMode
+              ? homeBasePivotCategories
+              : defaultPivotCategories
+            ).map((pivot) => (
+              <Pressable
+                style={styles.pivot}
+                onPress={() => {
+                  console.log(`Pivot: ${pivot.title}`);
+                }}
+              >
+                <Ionicons name={pivot.icon} size={20} color="black" />
+                <Text style={styles.pivotText}>{pivot.title}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -267,21 +290,21 @@ const styles = StyleSheet.create({
   },
   // LOCATION PIN STYLE-------------------
   iconWrapper: {
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: 'white', // optional background
-  borderRadius: 20,
-  padding: 4,
-},
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "white", // optional background
+    borderRadius: 20,
+    padding: 4,
+  },
   mapFooter: {
-position: "absolute",
+    position: "absolute",
 
-  // bottom: TAB_BAR_PADDING,
-  left: 0,
-  right: 0,
-  zIndex: 5,
-  backgroundColor: "transparent",
-  // paddingBottom: 10,
+    // bottom: TAB_BAR_PADDING,
+    left: 0,
+    right: 0,
+    zIndex: 5,
+    backgroundColor: "transparent",
+    // paddingBottom: 10,
   },
   map: {
     // width: Dimensions.get("window").width,
@@ -304,7 +327,7 @@ position: "absolute",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-  }, 
+  },
   shadow: {
     shadowColor: "rgba(0, 0, 0)",
     shadowOffset: {
@@ -322,6 +345,7 @@ position: "absolute",
     backgroundColor: "transparent",
     justifyContent: "space-between",
     paddingHorizontal: 20,
+    display: "none"
   },
   myBitmoji: {
     width: 70,
@@ -391,13 +415,13 @@ position: "absolute",
     zIndex: 10,
   },
   locationCard: {
-        position: "absolute",
-        top: 150,
-        left: 10,
-        backgroundColor: "white",
-        padding: 10,
-        borderRadius: 10,
-        zIndex: 999,
-        elevation: 10,
-      }
+    position: "absolute",
+    top: 150,
+    left: 10,
+    backgroundColor: "white",
+    padding: 10,
+    borderRadius: 10,
+    zIndex: 999,
+    elevation: 10,
+  },
 });
