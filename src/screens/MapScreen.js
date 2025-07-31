@@ -17,7 +17,8 @@ import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+//added
+import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 
@@ -152,7 +153,16 @@ export default function MapScreen({ navigation }) {
         region={currentRegion}
         showsUserLocation={true}
         showsMyLocationButton={true}
-      />
+        >
+         {/* adding markers to the map */}
+        {markers.map((marker, index) => (
+                    <Marker key={index} coordinate={marker} onPress={() => onMarkerSelected(marker)}>
+                      <View style={styles.iconWrapper}>
+      <Ionicons name="location-sharp" size={30} color="#FF5733" />
+    </View>
+                    </Marker>
+                  ))}
+      </MapView>
 
       <View style={styles.homeBaseToggleButton}>
         <Button
@@ -192,7 +202,7 @@ export default function MapScreen({ navigation }) {
           <View style={styles.places}>
             <Image
               style={styles.bitmojiImage}
-              source={require("../../assets/snapchat/ghostheart.png")}
+              source={require("../../assets/snapchat/personalBitmoji.png")}
             />
             <View style={styles.bitmojiTextContainer}>
               <Text style={styles.bitmojiText}>Places</Text>
@@ -243,6 +253,25 @@ const styles = StyleSheet.create({
     // justifyContent: "center",
     // position: "relative",
   },
+  markerImg: {
+    width: 35,
+    height: 50,
+  },
+  mapHeader: {
+    position: "absolute",
+    paddingTop: 75,
+    paddingRight: 25,
+    top: 0,
+    right: 0,
+  },
+  // LOCATION PIN STYLE-------------------
+  iconWrapper: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'white', // optional background
+  borderRadius: 20,
+  padding: 4,
+},
   mapFooter: {
 position: "absolute",
 
@@ -274,7 +303,7 @@ position: "absolute",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-  },
+  }, 
   shadow: {
     shadowColor: "rgba(0, 0, 0)",
     shadowOffset: {

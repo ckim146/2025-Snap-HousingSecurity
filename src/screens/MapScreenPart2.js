@@ -65,8 +65,8 @@ const [selectedPlace, setSelectedPlace] = useState("");
         showsUserLocation={true}
         showsMyLocationButton={true}
       >
-        {/*  */}
-{markers.map((marker, index) => (
+      
+        {markers.map((marker, index) => (
             <Marker key={index} coordinate={marker} onPress={() => onMarkerSelected(marker)}>
               <Image
                 source={require('../../assets/snapchat/ghostheart.png')}
