@@ -16,9 +16,11 @@ import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LocationCard } from "../components/LocationCard";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
+import {LocationCard} from "../components/LocationCard";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -142,7 +144,7 @@ export default function MapScreen({ navigation }) {
       style={[
         styles.container,
         {
-          /*marginBottom: tabBarHeight*/
+          position: "absolute",
         },
       ]}
     >
@@ -152,7 +154,17 @@ export default function MapScreen({ navigation }) {
         showsUserLocation={true}
         showsMyLocationButton={true}
       />
-
+  {/* <LocationCard
+        isVisible={true}
+        onClose={() => console.log("LocationCard closed")}
+        location={location}
+        currentRegion={currentRegion}
+        setCurrentRegion={setCurrentRegion}
+        style={styles.locationCard}
+      /> */}
+      <View style={[styles.locationCard, { backgroundColor: "red" }]}>
+  <Text>Test Card</Text>
+</View>
       <View style={styles.homeBaseToggleButton}>
         <Button
           title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
@@ -358,4 +370,14 @@ position: "absolute",
     alignSelf: "flex-start",
     zIndex: 10,
   },
+  locationCard: {
+        position: "absolute",
+        top: 150,
+        left: 10,
+        backgroundColor: "white",
+        padding: 10,
+        borderRadius: 10,
+        zIndex: 999,
+        elevation: 10,
+      }
 });
