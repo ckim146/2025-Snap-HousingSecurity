@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
@@ -128,6 +129,7 @@ export default function MapScreen({ navigation }) {
         longitudeDelta: 0.0421,
       });
       fetchData();
+      console.log("tabBarHeight:", tabBarHeight, "insets.bottom:", insets.bottom);
     })();
   }, []);
 
@@ -135,7 +137,15 @@ export default function MapScreen({ navigation }) {
   text = JSON.stringify(location);
 
   return (
-    <View style={[styles.container, { marginBottom: tabBarHeight }]}>
+    <SafeAreaView style={{ flex: 1 }}>
+    <View
+      style={[
+        styles.container,
+        {
+          /*marginBottom: tabBarHeight*/
+        },
+      ]}
+    >
       <MapView
         style={styles.map}
         region={currentRegion}
@@ -143,7 +153,14 @@ export default function MapScreen({ navigation }) {
         showsMyLocationButton={true}
       />
 
-      <View style={[styles.mapFooter]}>
+      <View style={styles.homeBaseToggleButton}>
+        <Button
+          title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
+          onPress={() => setHomeBaseMode(!homeBaseMode)}
+        />
+      </View>
+
+      <View style={[styles.mapFooter, { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING }]}>
         <View style={styles.locationContainer}>
           <TouchableOpacity
             style={[styles.userLocation, styles.shadow]}
@@ -170,18 +187,6 @@ export default function MapScreen({ navigation }) {
             </View>
           </Pressable>
 
-          <Button
-          title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
-          onPress={() => setHomeBaseMode(!homeBaseMode)}
-          style={{
-            backgroundColor: homeBaseMode ? "red" : "green",
-            borderRadius: 20,
-            padding: 10,
-            alignItems: "center",
-            justifyContent: "center",
-            marginHorizontal: 20,
-          }} />
-
           <View style={styles.places}>
             <Image
               style={styles.bitmojiImage}
@@ -201,23 +206,15 @@ export default function MapScreen({ navigation }) {
             </View>
           </View>
         </View>
-      </View>
-      <View
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: TAB_BAR_PADDING,
-          height: 60,
-        }}
-      >
-        
-        <ScrollView
+                <ScrollView
           horizontal
           contentContainerStyle={{ paddingHorizontal: 20 }}
           style={styles.pivotScrollView}
         >
-          {(homeBaseMode ? homeBasePivotCategories : defaultPivotCategories).map((pivot) => (
+          {(homeBaseMode
+            ? homeBasePivotCategories
+            : defaultPivotCategories
+          ).map((pivot) => (
             <Pressable
               style={styles.pivot}
               onPress={() => {
@@ -230,7 +227,9 @@ export default function MapScreen({ navigation }) {
           ))}
         </ScrollView>
       </View>
-    </View>
+
+      </View>
+    </SafeAreaView>
   );
 }
 
@@ -238,26 +237,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
+    // alignItems: "center",
+    // justifyContent: "center",
+    // position: "relative",
   },
   mapFooter: {
-    width: "100%",
-    display: "flex",
-    flexDirection: "column",
-    // position: "absolute",
-    // alignItems: "center",
-    justifyContent: "center",
-    bottom: TAB_BAR_PADDING + 140,
+position: "absolute",
+
+  // bottom: TAB_BAR_PADDING,
+  left: 0,
+  right: 0,
+  zIndex: 5,
+  backgroundColor: "transparent",
+  // paddingBottom: 10,
   },
   map: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    // width: Dimensions.get("window").width,
+    // height: Dimensions.get("window").height,
+    width: "100%",
+    height: "100%",
+    flex: 1,
   },
   locationContainer: {
     backgroundColor: "transparent",
     width: "100%",
-    paddingBottom: 8,
+    // paddingBottom: 8,
     alignItems: "center",
   },
   userLocation: {
@@ -280,13 +284,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   bitmojiContainer: {
+    flexDirection: "row",
+    marginBottom: 8,
     width: "100%",
     backgroundColor: "transparent",
-    flexDirection: "row",
     justifyContent: "space-between",
-    paddingBottom: 20,
     paddingHorizontal: 20,
-    marginBottom: TAB_BAR_PADDING + 20,
   },
   myBitmoji: {
     width: 70,
@@ -342,5 +345,17 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     color: "black",
+  },
+  homeBaseToggleButton: {
+    position: "absolute",
+    top: 50,
+    left: 10,
+    backgroundColor: "white",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    margin: 10,
+    alignSelf: "flex-start",
+    zIndex: 10,
   },
 });
