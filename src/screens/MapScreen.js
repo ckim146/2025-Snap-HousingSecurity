@@ -5,6 +5,7 @@ import {
   View,
   Dimensions,
   Image,
+  Alert,
   Text,
   TouchableOpacity,
   Pressable,
@@ -16,8 +17,8 @@ import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LocationCard } from "../components/LocationCard";
-
+//added
+import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 import {LocationCard} from "../components/LocationCard";
@@ -153,18 +154,17 @@ export default function MapScreen({ navigation }) {
         region={currentRegion}
         showsUserLocation={true}
         showsMyLocationButton={true}
-      />
-  {/* <LocationCard
-        isVisible={true}
-        onClose={() => console.log("LocationCard closed")}
-        location={location}
-        currentRegion={currentRegion}
-        setCurrentRegion={setCurrentRegion}
-        style={styles.locationCard}
-      /> */}
-      <View style={[styles.locationCard, { backgroundColor: "red" }]}>
-  <Text>Test Card</Text>
-</View>
+        >
+         {/* adding markers to the map */}
+        {markers.map((marker, index) => (
+                    <Marker key={index} coordinate={marker} onPress={() => onMarkerSelected(marker)}>
+                      <View style={styles.iconWrapper}>
+      <Ionicons name="location-sharp" size={30} color="#FF5733" />
+    </View>
+                    </Marker>
+                  ))}
+      </MapView>
+
       <View style={styles.homeBaseToggleButton}>
         <Button
           title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
@@ -188,9 +188,10 @@ export default function MapScreen({ navigation }) {
         <View style={[styles.bitmojiContainer, styles.shadow]}>
           <Pressable
             onPress={() => {
-              navigation.navigate("Event");
+              navigation.navigate("GhostPins");
             }}
           >
+            {/* starter code */}
             <View style={styles.myBitmoji}>
               <Ionicons name="calendar-outline" size={50} color="gray" />
               <View style={styles.bitmojiTextContainer}>
@@ -253,6 +254,25 @@ const styles = StyleSheet.create({
     // justifyContent: "center",
     // position: "relative",
   },
+  markerImg: {
+    width: 35,
+    height: 50,
+  },
+  mapHeader: {
+    position: "absolute",
+    paddingTop: 75,
+    paddingRight: 25,
+    top: 0,
+    right: 0,
+  },
+  // LOCATION PIN STYLE-------------------
+  iconWrapper: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'white', // optional background
+  borderRadius: 20,
+  padding: 4,
+},
   mapFooter: {
 position: "absolute",
 
@@ -284,7 +304,7 @@ position: "absolute",
     alignItems: "center",
     justifyContent: "center",
     elevation: 5,
-  },
+  }, 
   shadow: {
     shadowColor: "rgba(0, 0, 0)",
     shadowOffset: {
