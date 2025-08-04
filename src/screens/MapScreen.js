@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MapView, { Marker } from "react-native-maps";
 import {
   StyleSheet,
@@ -30,6 +30,12 @@ export default function MapScreen({ navigation }) {
   const [errorMsg, setErrorMsg] = useState(null);
   const [homeBaseMode, setHomeBaseMode] = useState(false);
   const [markerLocations, setMarkerLocations] = useState([]);
+  const PLACES_API_KEY = process.env.EXPO_PUBLIC_PLACES_KEY;
+  const [markerVersion, setMarkerVersion] = useState(0);
+
+  const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
+
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,geometry&key=${PLACES_API_KEY}`;
 
   const [currentRegion, setCurrentRegion] = useState({
     latitude: 34.0211573,
@@ -111,6 +117,7 @@ export default function MapScreen({ navigation }) {
         console.log("Fetched data:", data[0]);
         for (const item of data) {
           setMarkerLocations((prev) => [
+            ...prev,
             {
               latitude: item.location.latitude,
               longitude: item.location.longitude,
@@ -144,8 +151,62 @@ export default function MapScreen({ navigation }) {
         longitudeDelta: 0.0421,
       });
       fetchData();
+
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
+      );
+      const json = await res.json();
+      // console.log(json.results);
+
+      fetch(url)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Place details:", data); // helpful for debugging
+
+          if (data.result && data.result.geometry) {
+            const { lat, lng } = data.result.geometry.location;
+            const name = data.result.name || "Unknown Place";
+            console.log("google place details:", lat, lng);
+
+            setMarkerLocations((prev) => [
+              ...prev,
+              {
+                latitude: lat,
+                longitude: lng,
+                title: name,
+                description: name,
+                id: placeId,
+              },
+            ]);
+            setMarkerVersion((v) => v + 1);
+          } else {
+            console.warn("Missing geometry or result");
+          }
+        })
+        .catch((err) => {
+          console.error("Fetch error:", err);
+        });
     })();
   }, []);
+
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (markerLocations.length === 0 || !mapRef.current) return;
+
+    const timeout = setTimeout(() => {
+      const last = markerLocations[markerLocations.length - 1];
+
+      mapRef.current.animateToRegion({
+        latitude: last.latitude,
+        longitude: last.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    }, 100); // Delay ensures markers are mounted first
+
+    return () => clearTimeout(timeout);
+  }, [markerVersion]); // Trigger only when new marker is added
 
   let text = "Waiting...";
   text = JSON.stringify(location);
@@ -154,6 +215,7 @@ export default function MapScreen({ navigation }) {
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <MapView
+          ref={mapRef}
           style={styles.map}
           region={currentRegion}
           showsUserLocation={true}
@@ -163,17 +225,24 @@ export default function MapScreen({ navigation }) {
           }}
         >
           {/* adding markers to the map */}
-          {markerLocations.map((marker, index) => (
-            <Marker
-              key={marker.id}
-              coordinate={{latitude: marker.latitude, longitude: marker.longitude}}
-              onPress={() => console.log("Marker pressed:", marker.title)}
-            >
-              <View style={styles.iconWrapper}>
-                <Ionicons name="location-sharp" size={30} color="#FF5733" />
-              </View>
-            </Marker>
-          ))}
+          {markerLocations.map(
+            (marker, index) => (
+              (
+                <Marker
+                  key={`${marker.id}-${markerVersion}`}
+                  coordinate={{
+                    latitude: marker.latitude,
+                    longitude: marker.longitude,
+                  }}
+                  onPress={() => console.log("Marker pressed:", marker.title)}
+                >
+                  <View style={styles.iconWrapper}>
+                    <Ionicons name="location-sharp" size={30} color="#FF5733" />
+                  </View>
+                </Marker>
+              )
+            )
+          )}
         </MapView>
 
         <View style={styles.homeBaseToggleButton}>
@@ -345,7 +414,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    display: "none"
+    display: "none",
   },
   myBitmoji: {
     width: 70,
