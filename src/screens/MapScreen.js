@@ -28,6 +28,8 @@ export default function MapScreen({ navigation }) {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [homeBaseMode, setHomeBaseMode] = useState(false);
+  // modal (POP UP)
+const [isModalVisible, setModalVisible] = useState(false);
 
   const [currentRegion, setCurrentRegion] = useState({
     latitude: 34.0211573,
@@ -138,6 +140,25 @@ export default function MapScreen({ navigation }) {
   let text = "Waiting...";
   text = JSON.stringify(location);
 
+  //MODAL
+
+  const handleMapPress = async (event) => {
+    //COORDINATE = ACTUAL COORDINATES
+  const { coordinate } = event.nativeEvent; //onpress to get coordinates
+  console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
+  
+      const [place] = await Location.reverseGeocodeAsync(coordinate);
+     const placeName = place.name || `${place.street}, ${place.city}`;
+
+
+setSelectedPlace({
+       name: placeName,
+      
+});
+setModalVisible(true);
+
+}
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
     <View
@@ -153,6 +174,7 @@ export default function MapScreen({ navigation }) {
         region={currentRegion}
         showsUserLocation={true}
         showsMyLocationButton={true}
+        onPress={handleMapPress}
         >
          {/* adding markers to the map */}
         {markers.map((marker, index) => (
@@ -163,7 +185,12 @@ export default function MapScreen({ navigation }) {
                     </Marker>
                   ))}
       </MapView>
-
+{/* <Modal */}
+  {/* animationType="slide"
+  transparent={true}
+  visible={isModalVisible}
+  onRequestClose={() => setModalVisible(false)} */}
+{/* >  */}
       <View style={styles.homeBaseToggleButton}>
         <Button
           title={homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
@@ -195,8 +222,11 @@ export default function MapScreen({ navigation }) {
               <Ionicons name="calendar-outline" size={50} color="gray" />
               <View style={styles.bitmojiTextContainer}>
                 <Text style={styles.bitmojiText}>Events</Text>
+                
               </View>
+              
             </View>
+            
           </Pressable>
 
           <View style={styles.places}>
