@@ -226,10 +226,10 @@ export default function MapScreen({ navigation }) {
         >
           {/* adding markers to the map */}
           {markerLocations.map(
-            (marker, index) => (
-              (
+            (marker, index) => {
+              return (
                 <Marker
-                  key={`${marker.id}-${markerVersion}`}
+                  key={`${marker.id}`}
                   coordinate={{
                     latitude: marker.latitude,
                     longitude: marker.longitude,
@@ -241,7 +241,7 @@ export default function MapScreen({ navigation }) {
                   </View>
                 </Marker>
               )
-            )
+            }
           )}
         </MapView>
 
