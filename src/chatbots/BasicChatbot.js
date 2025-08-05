@@ -8,7 +8,7 @@ import defaultProfileImage from "../../assets/snapchat/defaultprofile12.png";
 const error = console.error;
 console.error = (...args) => {
   if (/defaultProps/.test(args[0])) return;
-  error(...args);
+  //error(...args);
 };
 
 const CHATBOT_USER_OBJ = {
