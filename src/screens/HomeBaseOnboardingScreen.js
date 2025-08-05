@@ -18,6 +18,7 @@ import { supabase } from "../utils/hooks/supabase";
 import orgIcon from "../../assets/Illuminati.png";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
+import orgIcon3 from "../../assets/smc_logo.png";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -60,43 +61,84 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
 
   return (
     <View style={styles.EventScreen}>
+      <Text style={styles.mainHeader}>Community Suggestions</Text>
       <ScrollView>
         <View style={styles.Events}>
-            <TouchableOpacity style={styles.orgContainer} onPress={() => console.log("Pressed")} //Org card. Map out later
-              >
-              <Image
-                source={orgIcon}
-                style={{ width: "30%", height: 100, borderRadius: 10 }}
-              />
-              <View style={{ flexDirection: "column", justifyContent: "flex-start", marginLeft: 10 }}>
+          <TouchableOpacity
+            style={styles.orgContainer}
+            onPress={() => console.log("Pressed")} //Org card. Map out later
+          >
+            <Image
+              source={orgIcon2}
+              style={{ width: "30%", height: 100, borderRadius: 10 }}
+            />
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "column",
+                justifyContent: "flex-start",
+                marginLeft: 10,
+              }}
+            >
+              <Text style={styles.title}>Safe Place for Youth</Text>
+              <Text style={styles.subtitle}>
+                Resources for housing insecure youth
+              </Text>
+            </View>
+            <View style={styles.plusButtonContainer}>
+              <IonIcon name="add-outline" size={30} color="black" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.orgContainer}
+            onPress={() => console.log("Pressed")} //Org card. Map out later
+          >
+            <Image
+              source={orgIcon3}
+              style={{ width: "30%", height: 100, borderRadius: 10 }}
+            />
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "column",
+                justifyContent: "flex-start",
+                marginLeft: 10,
+              }}
+            >
+              <Text style={styles.title}>Santa Monica College</Text>
+              <Text style={styles.subtitle}>
+                Resources for SMC students
+              </Text>
+            </View>
+            <View style={styles.plusButtonContainer}>
+              <IonIcon name="add-outline" size={30} color="black" />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.orgContainer}
+            onPress={() => console.log("Pressed")} //Org card. Map out later
+          >
+            <Image
+              source={orgIcon}
+              style={{ width: "30%", height: 100, borderRadius: 10 }}
+            />
+            <View
+              style={{
+                flexDirection: "column",
+                justifyContent: "flex-start",
+                marginLeft: 10,
+              }}
+            >
               <Text style={styles.title}>Illuminati</Text>
               <Text style={styles.subtitle}>Join the Illuminati</Text>
-              </View>
-              <IonIcon
-                name="add-outline"
-                size={30}
-                color="black"
-                style={{ marginLeft: "auto", marginRight: 10 }}
-              />
-            </TouchableOpacity>
+            </View>
+            <View style={styles.plusButtonContainer}>
+              <IonIcon name="add-outline" size={30} color="black" />
+            </View>
+          </TouchableOpacity>
 
-             <TouchableOpacity style={styles.orgContainer} onPress={() => console.log("Pressed")} //Org card. Map out later
-              >
-              <Image
-                source={orgIcon2}
-                style={{ width: "30%", height: 100, borderRadius: 10 }}
-              />
-              <View style={{ flexDirection: "column", justifyContent: "flex-start", marginLeft: 10 }}>
-              <Text style={styles.title}>Safe Place for Youth</Text>
-              <Text style={styles.subtitle}>Resources for housing insecure youth</Text>
-              </View>
-              <IonIcon
-                name="add-outline"
-                size={30}
-                color="black"
-                style={{ marginLeft: "auto", marginRight: 10 }}
-              />
-            </TouchableOpacity>
           {/* {events.map((event) => ( // Uncomment when organization table is created
             <TouchableOpacity
               key={event.id}
@@ -130,6 +172,12 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
               </View>
             </TouchableOpacity>
           ))} */}
+        </View>
+        <View style={styles.nextButton}>
+          <Button
+            title="Next"
+            onPress={() => navigation.navigate("Homebase")}
+          />
         </View>
       </ScrollView>
       <AddEvent
@@ -181,7 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     fontSize: 15,
   },
-    subtitle: {
+  subtitle: {
     marginTop: 2,
     marginBottom: 5,
     fontSize: 13,
@@ -225,6 +273,7 @@ const styles = StyleSheet.create({
   },
   orgContainer: {
     width: "90%",
+    height: 120,
     padding: 10,
     backgroundColor: "#ffffffff",
     borderRadius: 10,
@@ -237,5 +286,19 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     display: "flex",
     flexDirection: "row",
+  },
+  plusButtonContainer: {
+    position: "absolute",
+    right: 15,
+    top: "60%",
+    transform: [{ translateY: -15 }], // half of icon size to center vertically
+  },
+  mainHeader: {
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "left",
+    marginLeft: 40,
+    marginTop: 10,
+    marginBottom: 10,
   },
 });
