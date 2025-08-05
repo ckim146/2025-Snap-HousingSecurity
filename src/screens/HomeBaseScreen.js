@@ -20,7 +20,7 @@ import { Pressable } from "react-native";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [orgs, setOrgs] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -37,11 +37,11 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   const fetchData = async () => {
     try {
-      const { data, error } = await supabase.from("event_table").select("*");
+      const { data, error } = await supabase.from("organizations").select("*");
       if (error) {
         console.error("Error fetching data:", error);
       } else {
-        setEvents(data);
+        setOrgs(data);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -99,7 +99,7 @@ export default function HomeBaseScreen({ route, navigation }) {
 
       <ScrollView>
         <View style={styles.Events}>
-          {/* {events.map((event) => (
+          {/* {orgs.map((event) => (
             <TouchableOpacity
               key={event.id}
               onPress={() => handleCardTouch(event)}

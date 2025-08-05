@@ -22,7 +22,7 @@ import orgIcon3 from "../../assets/smc_logo.png";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [orgs, setOrgs] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -38,25 +38,58 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   }
 
   //Unccomment when organization table is created
-  // const fetchData = async () => {
-  //   try {
-  //     const { data, error } = await supabase.from("event_table").select("*");
-  //     if (error) {
-  //       console.error("Error fetching data:", error);
-  //     } else {
-  //       setEvents(data);
-  //     }
-  //   } catch (error) {
-  //     console.error("Unexpected error:", error);
-  //   }
-  // };
+  const fetchData = async () => {
+    try {
+      const { data, error } = await supabase.from("organizations").select("*");
+      if (error) {
+        console.error("Error fetching data:", error);
+      } else {
+        setOrgs(data);
+
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
 
   const refreshEvents = async () => {
     // await fetchData();
   };
 
+    //we want to use this function to send information to Supabse when Submit button is clicked
+  // function submitToSupabase(orgData) {
+
+  //   let object = {
+  //     id: btoa(title + time + new Date().toISOString()),
+  //     user_id: 
+  //   };
+  //   return object;
+  // }
+
+    const insertData = async () => {
+      if (title != "" && time != "" && location != "") {
+        const eventData = submitToSupabase();
+        console.log(eventData);
+  
+        onClose();
+        try {
+          const { data, error } = await supabase
+            .from("event_table") //
+            .insert([eventData]); // Insert the event data
+  
+          if (error) {
+            console.error("Event already exists:", error);
+          } else {
+            console.log("Data inserted:", data);
+          }
+        } catch (error) {
+          console.error("Unexpected error:", error);
+        }
+      }
+    };
+
   useEffect(() => {
-    // fetchData();
+    fetchData();
   }, []);
 
   return (
@@ -64,82 +97,42 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
       <Text style={styles.mainHeader}>Community Suggestions</Text>
       <ScrollView>
         <View style={styles.Events}>
-          <TouchableOpacity
-            style={styles.orgContainer}
-            onPress={() => console.log("Pressed")} //Org card. Map out later
-          >
-            <Image
-              source={orgIcon2}
-              style={{ width: "30%", height: 100, borderRadius: 10 }}
-            />
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                marginLeft: 10,
-              }}
-            >
-              <Text style={styles.title}>Safe Place for Youth</Text>
-              <Text style={styles.subtitle}>
-                Resources for housing insecure youth
-              </Text>
-            </View>
-            <View style={styles.plusButtonContainer}>
-              <IonIcon name="add-outline" size={30} color="black" />
-            </View>
-          </TouchableOpacity>
+          {/* Mapping of organization cards from orgs state variable. */}
+          {orgs.length > 0 ? (
+            orgs.map((org, index) => {
+              return (
+              <TouchableOpacity
+                key={org.id}
+                style={styles.orgContainer}
+                onPress={() => console.log("Pressed")}
+              >
+                <Image
+                  source={{ uri: org.logo }}
+                  style={{ width: "30%", height: 100, borderRadius: 10 }}
+                />
+                <View
+                  style={{
+                    flex: 1,
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    marginLeft: 10,
+                  }}
+                >
+                  <Text style={styles.title}>{org.name}</Text>
+                  <Text style={styles.subtitle}>{org.description}</Text>
+                </View>
+                <View style={styles.plusButtonContainer}>
+                  <IonIcon name="add-outline" size={30} color="black" />
+                </View>
+              </TouchableOpacity>
+              );
+            })
+          ) : (
+            <Text>Loading organizations...</Text>
+          )}
 
-          <TouchableOpacity
-            style={styles.orgContainer}
-            onPress={() => console.log("Pressed")} //Org card. Map out later
-          >
-            <Image
-              source={orgIcon3}
-              style={{ width: "30%", height: 100, borderRadius: 10 }}
-            />
-            <View
-              style={{
-                flex: 1,
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                marginLeft: 10,
-              }}
-            >
-              <Text style={styles.title}>Santa Monica College</Text>
-              <Text style={styles.subtitle}>
-                Resources for SMC students
-              </Text>
-            </View>
-            <View style={styles.plusButtonContainer}>
-              <IonIcon name="add-outline" size={30} color="black" />
-            </View>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.orgContainer}
-            onPress={() => console.log("Pressed")} //Org card. Map out later
-          >
-            <Image
-              source={orgIcon}
-              style={{ width: "30%", height: 100, borderRadius: 10 }}
-            />
-            <View
-              style={{
-                flexDirection: "column",
-                justifyContent: "flex-start",
-                marginLeft: 10,
-              }}
-            >
-              <Text style={styles.title}>Illuminati</Text>
-              <Text style={styles.subtitle}>Join the Illuminati</Text>
-            </View>
-            <View style={styles.plusButtonContainer}>
-              <IonIcon name="add-outline" size={30} color="black" />
-            </View>
-          </TouchableOpacity>
-
-          {/* {events.map((event) => ( // Uncomment when organization table is created
+          {/* {orgs.map((event) => ( // Uncomment when organization table is created
             <TouchableOpacity
               key={event.id}
               onPress={() => handleCardTouch(event)}
