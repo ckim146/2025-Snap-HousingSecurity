@@ -12,8 +12,11 @@ import AstrologyScreen from "../screens/AstrologyScreen";
 import MemoryScreen from "../screens/MemoryScreen";
 import EventScreen from "../screens/EventScreen"; //New component by Sona and Christian
 import HomeBaseScreen from "../screens/HomeBaseScreen";
-import HomeBaseOnboardingScreen from "../screens/HomeBaseOnboardingScreen";
-
+//added main page for Homebase
+import HomeBaseMainPage from "../screens/HomeBaseMainPage";
+import CorkBoardScreen from "../screens/CorkBoardScreen";
+import MapInsideHomeBase from "../screens/MapInsideHomeBase";
+import MapScreen from "../screens/MapScreen";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -76,12 +79,40 @@ export default function App() {
           component={HomeBaseScreen}
           options={{ headerShown: true }}
         />
-        <Stack.Screen
-          name="HomebaseOnboarding"
-          component={HomeBaseOnboardingScreen}
-          options={{ headerShown: true }}
-        />
+        <Stack.Screen name="HomeBaseMainPage" 
+        component={HomeBaseMainPage}
+        options={{ 
+          
+          headerShown: true,
+          title: "Homebase Main Page",
+          headerStyle: {
+            backgroundColor: "#f5f5f5",
+          },
+          
+          headerTitleStyle: {
+            fontWeight: "bold",
+            color: "#333",
+          },
+          
+        }}>
+
+        </Stack.Screen>
+        <Stack.Screen name="CorkBoardScreen" 
+        component={CorkBoardScreen} 
+        options={{ headerShown: true }}
+/>
+        <Stack.Screen 
+        name="MapInsideHomeBase" 
+        component={MapInsideHomeBase}
+        options={{ headerShown: true }}
+ />
+
       </Stack.Navigator>
+
+      <Stack.Screen name="Map" 
+      component={MapScreen} 
+      />
+
     </NavigationContainer>
   );
 }

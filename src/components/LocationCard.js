@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { supabase } from "../utils/hooks/supabase";
 import { Dialog, FAB } from "@rn-vui/themed";
-import BottomSheet from "@gorhom/bottom-sheet";
+//import BottomSheet from "@gorhom/bottom-sheet";
 
 export default function LocationCard({ isVisible, onClose, style }) {
   const [title, setTitle] = useState("");

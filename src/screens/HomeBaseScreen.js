@@ -15,14 +15,21 @@ import { ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
 import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
-import IonIcon from "react-native-vector-icons/Ionicons";
-import { Pressable } from "react-native";
+import {NavigationContainer} from '@react-navigation/native';
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
   const [events, setEvents] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+//selected 
+  const [selected, setSelected] = useState([]);
+
+const cards = [
+    { id: 1, name: "Safe Place for Youth (SPY)" },
+    { id: 2, name: "Venice Community Housing" },
+    { id: 3, name: "Food Pantry Nearby" },
+  ];
 
   function toggleComponent() {
     setVisible(!visible);
@@ -35,11 +42,24 @@ export default function HomeBaseScreen({ route, navigation }) {
     setSelectedEvent(event);
   }
 
+  const toggleSelect = (id) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSubmit = () => {
+    navigation.navigate("HomeBaseMainPage", {
+      selectedCards: cards.filter((card) => selected.includes(card.id)),
+    });
+  };
+
+
   const fetchData = async () => {
     try {
       const { data, error } = await supabase.from("event_table").select("*");
       if (error) {
-        console.error("Error fetching data:", error);
+        //console.error("Error fetching data:", error);
       } else {
         setEvents(data);
       }
@@ -58,45 +78,40 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   return (
     <View style={styles.EventScreen}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.mainHeader}>Home Base</Text>
-        <Pressable //Search Icon
-          onPress={() => navigation.navigate("Notifications")}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.6 : 1, // gives feedback on touch
-            backgroundColor: pressed ? "white" : "transparent", // "invert" effect
-            borderRadius: 25,
-          })}
-        >
-          <IonIcon name="search-circle-outline" size={50} color="black" />
-        </Pressable>
-      </View>
-      <View style={styles.homebaseCard}>
-        <View style={styles.cardHeader}>
-          <Text style={[styles.header, { flex: 1 }]}>
-            Corkboard
-          </Text>
-          <Pressable //Arrow Icon
-            onPress={() => navigation.navigate("Notifications")}
-            style={{ marginLeft: "auto" }}
+      <Text style={styles.header}>Choose your resources</Text>
+      <ScrollView contentContainerStyle={styles.cardContainer}>
+        {cards.map((card) => (
+          <TouchableOpacity
+            key={card.id}
+            onPress={() => toggleSelect(card.id)}
+            style={[
+              styles.homebaseCard,
+              selected.includes(card.id) && styles.selectedCard,
+            ]}
           >
-            <IonIcon name="chevron-forward-outline" size={32} color="black" />
-          </Pressable>
-        </View>
-      </View>
-      <View style={styles.homebaseCard}>
-        <View style={styles.cardHeader}>
-        <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
-                <Pressable //Arrow Icon
-          onPress={() => navigation.navigate("Notifications")}
-          style={{ marginLeft: "auto" }}
-        >
-          <IonIcon name="chevron-forward-outline" size={32} color="black" />
-        </Pressable>
-        </View>
+            <Text style={styles.cardText}>{card.name}</Text>
+          </TouchableOpacity>
+        ))}
+      
+      {/* <View style={styles.homebaseCard}>
+        <Text style={styles.header}>Safe Place for Youth (SPY) </Text>
+        <Button
+        onPress={() => {
+          navigation.navigate("Organization");
+        }}
+        title="Homebase"
+        color="#841584"
+        accessibilityLabel="Learn more about this purple button"
+      />
+        </View> */}
+              </ScrollView>
 
+<View style={styles.submitButton}>
+        <Button title="Submit" onPress={handleSubmit} disabled={selected.length === 0} />
       </View>
 
+        
+      
       <ScrollView>
         <View style={styles.Events}>
           {/* {events.map((event) => (
@@ -134,6 +149,9 @@ export default function HomeBaseScreen({ route, navigation }) {
           ))} */}
         </View>
       </ScrollView>
+
+
+      
       <FAB
         onPress={toggleComponent}
         style={styles.addButton}
@@ -256,31 +274,36 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
+    marginVertical: 20,
   },
-  mainHeader: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginLeft: 40,
-    marginTop: 10,
-    marginBottom: 10,
-  },
+  cardContainer: {
+  paddingHorizontal: 20,
+  paddingBottom: 20,
+  gap: 20,
+},
   homebaseCard: {
-    backgroundColor: "white",
-    borderWidth: 0,
+  backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    width: "80%",
-    alignSelf: "center",
-    top: "5%",
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    // paddingTop: 12,
-    paddingBottom: 0,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    marginBottom: 20,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
+ selectedCard: {
+    backgroundColor: "#d0e8ff",
+    borderWidth: 2,
+    borderColor: "#007bff",
+  },
+  cardText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  submitButton: {
+    marginTop: 30,
+    marginBottom: 40,
+  },
+
+
 });
