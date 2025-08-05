@@ -211,6 +211,25 @@ export default function MapScreen({ navigation }) {
   let text = "Waiting...";
   text = JSON.stringify(location);
 
+  //MODAL
+
+  const handleMapPress = async (event) => {
+    //COORDINATE = ACTUAL COORDINATES
+  const { coordinate } = event.nativeEvent; //onpress to get coordinates
+  console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
+  
+      const [place] = await Location.reverseGeocodeAsync(coordinate);
+     const placeName = place.name || `${place.street}, ${place.city}`;
+
+
+setSelectedPlace({
+       name: placeName,
+      
+});
+setModalVisible(true);
+
+}
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
