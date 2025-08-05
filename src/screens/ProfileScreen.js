@@ -61,7 +61,7 @@ export default function ProfileScreen() {
       <Pressable
         style={styles.homebaseCard}
         onPress={() => {
-          navigation.navigate("Homebase");
+          navigation.navigate("HomebaseOnboarding");
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>

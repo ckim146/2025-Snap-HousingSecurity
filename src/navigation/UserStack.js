@@ -12,6 +12,7 @@ import AstrologyScreen from "../screens/AstrologyScreen";
 import MemoryScreen from "../screens/MemoryScreen";
 import EventScreen from "../screens/EventScreen"; //New component by Sona and Christian
 import HomeBaseScreen from "../screens/HomeBaseScreen";
+import HomeBaseOnboardingScreen from "../screens/HomeBaseOnboardingScreen";
 
 const Stack = createStackNavigator();
 
@@ -73,6 +74,11 @@ export default function App() {
         <Stack.Screen
           name="Homebase"
           component={HomeBaseScreen}
+          options={{ headerShown: true }}
+        />
+        <Stack.Screen
+          name="HomebaseOnboarding"
+          component={HomeBaseOnboardingScreen}
           options={{ headerShown: true }}
         />
       </Stack.Navigator>
