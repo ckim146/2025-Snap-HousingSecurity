@@ -132,7 +132,6 @@ const styles = StyleSheet.create({
   },
   homebaseCard: {
     flexDirection: "row",
-    flex: 1,
     backgroundColor: "white",
     borderWidth: 0,
     shadowColor: "#000",
