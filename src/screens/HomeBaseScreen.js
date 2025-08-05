@@ -15,6 +15,8 @@ import { ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
 import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
+import IonIcon from "react-native-vector-icons/Ionicons";
+import { Pressable } from "react-native";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -56,10 +58,45 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   return (
     <View style={styles.EventScreen}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.mainHeader}>Home Base</Text>
+        <Pressable //Search Icon
+          onPress={() => navigation.navigate("Notifications")}
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1, // gives feedback on touch
+            backgroundColor: pressed ? "white" : "transparent", // "invert" effect
+            borderRadius: 25,
+          })}
+        >
+          <IonIcon name="search-circle-outline" size={50} color="black" />
+        </Pressable>
+      </View>
       <View style={styles.homebaseCard}>
-        <Text style={styles.header}>Corkboard</Text>
+        <View style={styles.cardHeader}>
+          <Text style={[styles.header, { flex: 1 }]}>
+            Corkboard
+          </Text>
+          <Pressable //Arrow Icon
+            onPress={() => navigation.navigate("Notifications")}
+            style={{ marginLeft: "auto" }}
+          >
+            <IonIcon name="chevron-forward-outline" size={32} color="black" />
+          </Pressable>
         </View>
-      
+      </View>
+      <View style={styles.homebaseCard}>
+        <View style={styles.cardHeader}>
+        <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
+                <Pressable //Arrow Icon
+          onPress={() => navigation.navigate("Notifications")}
+          style={{ marginLeft: "auto" }}
+        >
+          <IonIcon name="chevron-forward-outline" size={32} color="black" />
+        </Pressable>
+        </View>
+
+      </View>
+
       <ScrollView>
         <View style={styles.Events}>
           {/* {events.map((event) => (
@@ -136,11 +173,37 @@ const styles = StyleSheet.create({
     display: "flex",
     justifyContent: "space-between",
     // alignItems:"center",
-    padding: 10,
+    // padding: 10,
     // gap:10,
     borderRadius: 20,
     maxHeight: 250,
     margin: 0,
+  },
+  headerContainer: {
+    width: "90%",
+    flexDirection: "row",
+    alignItems: "center",
+    // backgroundColor: "#E5E5E5",
+    display: "flex",
+    justifyContent: "space-between",
+    // alignItems:"center",
+    // padding: 10,
+    // gap:10,
+    borderRadius: 20,
+    maxHeight: 250,
+    margin: 0,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 50,
+    // backgroundColor: "#E5E5E5",
+    // padding: 10,
+    // gap:10,
+    borderRadius: 20,
+    // maxHeight: 250,
+    // margin: 0,
   },
   bitmojiUser: {
     width: 28,
@@ -193,7 +256,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-    marginVertical: 20,
+  },
+  mainHeader: {
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "left",
+    marginLeft: 40,
+    marginTop: 10,
+    marginBottom: 10,
   },
   homebaseCard: {
     backgroundColor: "white",
@@ -202,12 +272,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
-    borderColor: "yellow",
     width: "80%",
-    position: "absolute",
     alignSelf: "center",
-    top: "15%",
+    top: "5%",
     borderRadius: 20,
-    padding: 20,
+    paddingHorizontal: 20,
+    // paddingTop: 12,
+    paddingBottom: 0,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginBottom: 20,
   },
 });
