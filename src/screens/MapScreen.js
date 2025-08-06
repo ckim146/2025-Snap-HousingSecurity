@@ -22,6 +22,7 @@ import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 import { LocationCard } from "../components/LocationCard";
+import { MapFilterPanel } from "../components/MapFilterPanel"; 
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -243,6 +244,8 @@ setModalVisible(true);
             console.log("Map pressed at:", e.nativeEvent.coordinate);
           }}
         >
+
+
           {/* adding markers to the map */}
           {markerLocations.map(
             (marker, index) => {
@@ -272,6 +275,11 @@ setModalVisible(true);
             onPress={() => setHomeBaseMode(!homeBaseMode)}
           />
         </View>
+          <MapFilterPanel
+            collapsedText="Tap to filter"
+            expandedText="Filter options will go here"
+          />
+
 
         <View
           style={[
@@ -279,6 +287,7 @@ setModalVisible(true);
             { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING },
           ]}
         >
+                            
           <View style={styles.locationContainer}>
             <TouchableOpacity
               style={[styles.userLocation, styles.shadow]}
