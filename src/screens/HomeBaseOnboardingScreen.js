@@ -27,6 +27,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const { user } = useAuthentication();
+  const [visibleOrgs, setVisibleOrgs] = useState([]);
 
   function toggleComponent() {
     setVisible(!visible);
@@ -47,6 +48,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         console.error("Error fetching data:", error);
       } else {
         setOrgs(data);
+        setVisibleOrgs(data.slice(0, 3)); // Display only the first 3 organizations
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -56,15 +58,18 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   /*When a organization card is pressed, this function will submit the org assignment to Supabase. Constraint set on Supabase table
 to prevent duplicate entries, so this will only work if the user has not already joined the organization.*/
   const submitToSupabase = async (orgData) => {
-    let object = {
+    let newUserOrgAssignment = {
       user_id: user.id,
       org_id: orgData.id,
     };
     try {
-      console.log("Submitting org assignment to Supabase:", object);
+      console.log(
+        "Submitting org assignment to Supabase:",
+        newUserOrgAssignment
+      );
       const { data, error } = await supabase
         .from("org_user_assignments") //
-        .insert([object]); // Insert the org assignment data
+        .insert([newUserOrgAssignment]); // Insert the org assignment data
 
       if (error) {
         console.error("org assignment already exists:", error);
@@ -74,6 +79,10 @@ to prevent duplicate entries, so this will only work if the user has not already
     } catch (error) {
       console.error("Unexpected error:", error);
     }
+    // Remove clicked org from the queue
+    const updatedAll = orgs.filter((org) => org.id !== orgData.id);
+    setOrgs(updatedAll);
+    setVisibleOrgs(updatedAll.slice(0, 3));
   };
 
   const fetchUserOrgs = async () => {
@@ -107,8 +116,8 @@ to prevent duplicate entries, so this will only work if the user has not already
       <ScrollView>
         <View style={styles.Events}>
           {/* Mapping of organization cards from orgs state variable. */}
-          {orgs.length > 0 ? (
-            orgs.map((org, index) => {
+          {visibleOrgs.length > 0 ? (
+            visibleOrgs.map((org, index) => {
               return (
                 <TouchableOpacity
                   key={org.id}
