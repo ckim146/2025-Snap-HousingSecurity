@@ -88,7 +88,7 @@ export default function HomeBaseScreen({ route, navigation }) {
         <View style={styles.cardHeader}>
         <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
                 <Pressable //Arrow Icon
-          onPress={() => navigation.navigate("Notifications")}
+          onPress={() => navigation.navigate("UserTab", {screen: "Map"})}
           style={{ marginLeft: "auto" }}
         >
           <IonIcon name="chevron-forward-outline" size={32} color="black" />

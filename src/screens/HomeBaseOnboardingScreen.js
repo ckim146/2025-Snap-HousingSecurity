@@ -64,6 +64,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         })); // Display only the first 3 organizations
         console.log("org length", data.length);
       }
+      console.log("Fetched org names:", data.map((org) => org.name));
     } catch (error) {
       console.error("Unexpected error:", error);
     }
