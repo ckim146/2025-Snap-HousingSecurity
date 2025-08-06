@@ -19,12 +19,14 @@ import orgIcon from "../../assets/Illuminati.png";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
   const [orgs, setOrgs] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const { user } = useAuthentication();
 
   function toggleComponent() {
     setVisible(!visible);
@@ -45,7 +47,46 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         console.error("Error fetching data:", error);
       } else {
         setOrgs(data);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
 
+  /*When a organization card is pressed, this function will submit the org assignment to Supabase. Constraint set on Supabase table
+to prevent duplicate entries, so this will only work if the user has not already joined the organization.*/
+  const submitToSupabase = async (orgData) => {
+    let object = {
+      user_id: user.id,
+      org_id: orgData.id,
+    };
+    try {
+      console.log("Submitting org assignment to Supabase:", object);
+      const { data, error } = await supabase
+        .from("org_user_assignments") //
+        .insert([object]); // Insert the org assignment data
+
+      if (error) {
+        console.error("org assignment already exists:", error);
+      } else {
+        console.log("Data inserted:", data); //Will log "null" even when it is successful. Needs a select query to return the inserted data
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  };
+
+  const fetchUserOrgs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("org_user_assignments")
+        .select(`org_id, organizations(name)`)
+        .eq("user_id", user.id);
+      if (error) {
+        console.error("Error fetching user's orgs:", error);
+      } else {
+        console.log("User's id:", user.id);
+        console.log("User's orgs:", data);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -55,38 +96,6 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const refreshEvents = async () => {
     // await fetchData();
   };
-
-    //we want to use this function to send information to Supabse when Submit button is clicked
-  // function submitToSupabase(orgData) {
-
-  //   let object = {
-  //     id: btoa(title + time + new Date().toISOString()),
-  //     user_id: 
-  //   };
-  //   return object;
-  // }
-
-    const insertData = async () => {
-      if (title != "" && time != "" && location != "") {
-        const eventData = submitToSupabase();
-        console.log(eventData);
-  
-        onClose();
-        try {
-          const { data, error } = await supabase
-            .from("event_table") //
-            .insert([eventData]); // Insert the event data
-  
-          if (error) {
-            console.error("Event already exists:", error);
-          } else {
-            console.log("Data inserted:", data);
-          }
-        } catch (error) {
-          console.error("Unexpected error:", error);
-        }
-      }
-    };
 
   useEffect(() => {
     fetchData();
@@ -101,36 +110,35 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
           {orgs.length > 0 ? (
             orgs.map((org, index) => {
               return (
-              <TouchableOpacity
-                key={org.id}
-                style={styles.orgContainer}
-                onPress={() => console.log("Pressed")}
-              >
-                <Image
-                  source={{ uri: org.logo }}
-                  style={{ width: "30%", height: 100, borderRadius: 10 }}
-                />
-                <View
-                  style={{
-                    flex: 1,
-                    flexDirection: "column",
-                    justifyContent: "flex-start",
-                    marginLeft: 10,
-                  }}
+                <TouchableOpacity
+                  key={org.id}
+                  style={styles.orgContainer}
+                  onPress={() => submitToSupabase(org)}
                 >
-                  <Text style={styles.title}>{org.name}</Text>
-                  <Text style={styles.subtitle}>{org.description}</Text>
-                </View>
-                <View style={styles.plusButtonContainer}>
-                  <IonIcon name="add-outline" size={30} color="black" />
-                </View>
-              </TouchableOpacity>
+                  <Image
+                    source={{ uri: org.logo }}
+                    style={{ width: "30%", height: 100, borderRadius: 10 }}
+                  />
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "column",
+                      justifyContent: "flex-start",
+                      marginLeft: 10,
+                    }}
+                  >
+                    <Text style={styles.title}>{org.name}</Text>
+                    <Text style={styles.subtitle}>{org.description}</Text>
+                  </View>
+                  <View style={styles.plusButtonContainer}>
+                    <IonIcon name="add-outline" size={30} color="black" />
+                  </View>
+                </TouchableOpacity>
               );
             })
           ) : (
             <Text>Loading organizations...</Text>
           )}
-
 
           {/* {orgs.map((event) => ( // Uncomment when organization table is created
             <TouchableOpacity
@@ -170,6 +178,12 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
           <Button
             title="Next"
             onPress={() => navigation.navigate("Homebase")}
+          />
+        </View>
+        <View style={styles.nextButton}>
+          <Button
+            title="Log user joined orgs"
+            onPress={() => fetchUserOrgs()}
           />
         </View>
       </ScrollView>

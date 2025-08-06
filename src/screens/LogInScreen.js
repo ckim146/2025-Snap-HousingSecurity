@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { supabase } from "../utils/hooks/supabase";
+import { useUser } from "../components/UserContext";
 
 // Components
 import ReturnButton from "../components/ReturnButton";
@@ -15,6 +16,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordLength, setPasswordLength] = useState(0);
+  const { setUser } = useUser();
 
   async function handleSubmit() {
     // console.log("handle submit invoked!!");
@@ -27,6 +29,7 @@ export default function LoginScreen({ navigation }) {
     if (error) {
       console.error("Error logging in:", error.message);
     } else {
+      setUser(data.user);
       // console.log("User signed in:", user);
       // Navigate to a different screen or handle successful login
     }
