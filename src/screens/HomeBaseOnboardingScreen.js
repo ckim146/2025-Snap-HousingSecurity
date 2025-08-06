@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import { useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
@@ -27,7 +27,16 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const { user } = useAuthentication();
-  const [visibleOrgs, setVisibleOrgs] = useState([]);
+  // const [visibleOrgs, setVisibleOrgs] = useState([]);
+  const [userInput, setUserInput] = useState("");
+  // const [orgContainerVisible, setOrgContainerVisible] = useState(false);
+  // const [isSorting, setIsSorting] = useState(true);
+  const [orgState, setOrgState] = useState({
+    visibleOrgs: [],
+    sortedOrgs: [],
+    isSorting: true,
+    orgContainerVisible: false,
+  });
 
   function toggleComponent() {
     setVisible(!visible);
@@ -48,11 +57,61 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         console.error("Error fetching data:", error);
       } else {
         setOrgs(data);
-        setVisibleOrgs(data.slice(0, 3)); // Display only the first 3 organizations
+        setOrgState((prevState) => ({
+          ...prevState,
+          visibleOrgs: data.slice(0, 3),
+          sortedOrgs: data, 
+        })); // Display only the first 3 organizations
+        console.log("org length", data.length);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
     }
+  };
+
+  //Use OpenAI to sort the list of organizations by relevance to the user
+  const sortOrgsByRelevance = async (userInput, orgs) => {
+    const prompt = `A user wrote this about themselves: "${userInput}".You are given this list of organizations:
+${orgs.map((org, i) => `${i + 1}. ${org.name} - ${org.description}`).join("\n")}
+Sort these organizations from most to least relevant for the user based on their interests.
+Return ONLY a JSON array of the organization names in the sorted order, like:
+["Org Name 1", "Org Name 2", ...]`;
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.EXPO_PUBLIC_SENSITIVE_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.7,
+      }),
+    });
+
+    const json = await response.json();
+    const resultText = json.choices?.[0]?.message?.content;
+
+    // Map sorted names back to the full org objects
+    const nameToOrgMap = {};
+    orgs.forEach((org) => {
+      nameToOrgMap[org.name] = org;
+    });
+
+    //Use mapped names to create a sorted array of org objects
+    const sortedOrgs = JSON.parse(resultText)
+      .map((name) => nameToOrgMap[name])
+      .filter(Boolean); // Removes any unmatched names
+
+    console.log("Sorted orgs:", sortedOrgs);
+    setOrgState((prev) => ({
+      ...prev,
+      visibleOrgs: sortedOrgs.slice(0, 3), // Show only the first 3 sorted organizations
+      isSorting: false,
+      sortedOrgs: sortedOrgs,
+      orgContainerVisible: true,
+    }));
   };
 
   /*When a organization card is pressed, this function will submit the org assignment to Supabase. Constraint set on Supabase table
@@ -80,9 +139,16 @@ to prevent duplicate entries, so this will only work if the user has not already
       console.error("Unexpected error:", error);
     }
     // Remove clicked org from the queue
-    const updatedAll = orgs.filter((org) => org.id !== orgData.id);
-    setOrgs(updatedAll);
-    setVisibleOrgs(updatedAll.slice(0, 3));
+    const updatedAll = orgState.sortedOrgs.filter(
+      (org) => org.id !== orgData.id
+    );
+    const newVisible = updatedAll.slice(0, 3);
+    // setOrgs(updatedAll);
+    setOrgState((prevState) => ({
+      ...prevState,
+      sortedOrgs: updatedAll,
+      visibleOrgs: newVisible,
+    }));
   };
 
   const fetchUserOrgs = async () => {
@@ -113,12 +179,27 @@ to prevent duplicate entries, so this will only work if the user has not already
   return (
     <View style={styles.EventScreen}>
       <Text style={styles.mainHeader}>Community Suggestions</Text>
+      <TextInput
+        style={{ margin: 20, borderWidth: 1, padding: 10 }}
+        value={userInput}
+        onChangeText={setUserInput}
+        placeholder="Describe your interests or needs"
+      />
+      <Button
+        title="Show my new homes"
+        onPress={() => sortOrgsByRelevance(userInput, orgs)}
+      />
       <ScrollView>
-        <View style={styles.Events}>
+        <View
+          style={[
+            styles.Events,
+            { display: orgState.orgContainerVisible ? "flex" : "none" },
+          ]}
+        >
           {/* Mapping of organization cards from orgs state variable. */}
-          {visibleOrgs.length > 0 ? (
-            visibleOrgs.map((org, index) => {
-              return (
+          {!orgState.isSorting ? (
+            orgState.visibleOrgs.length > 0 ? (
+              orgState.visibleOrgs.map((org, index) => (
                 <TouchableOpacity
                   key={org.id}
                   style={styles.orgContainer}
@@ -143,11 +224,11 @@ to prevent duplicate entries, so this will only work if the user has not already
                     <IonIcon name="add-outline" size={30} color="black" />
                   </View>
                 </TouchableOpacity>
-              );
-            })
-          ) : (
-            <Text>Loading organizations...</Text>
-          )}
+              ))
+            ) : (
+              <Text>Loading organizations...</Text>
+            )
+          ) : null}
 
           {/* {orgs.map((event) => ( // Uncomment when organization table is created
             <TouchableOpacity
