@@ -213,6 +213,7 @@ useEffect(() => {
 
     const timeout = setTimeout(() => {
       const last = markerLocations[markerLocations.length - 1];
+      console.log("Animating to last marker:", last);
 
       mapRef.current.animateToRegion({
         latitude: last.latitude,
@@ -228,7 +229,6 @@ useEffect(() => {
   let text = "Waiting...";
   text = JSON.stringify(location);
 
-  //MODAL
 
   const handleMapPress = async (event) => {
     //COORDINATE = ACTUAL COORDINATES
@@ -405,7 +405,6 @@ const styles = StyleSheet.create({
   iconWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "white", // optional background
     borderRadius: 20,
     padding: 4,
   },
