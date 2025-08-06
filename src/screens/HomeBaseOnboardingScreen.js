@@ -19,7 +19,7 @@ import orgIcon from "../../assets/Illuminati.png";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
-import { useAuthentication } from "../utils/hooks/useAuthentication";
+  import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -152,6 +152,26 @@ to prevent duplicate entries, so this will only work if the user has not already
     }));
   };
 
+  /* This fetch is to be used for the main home base screen to retireve org events. Move after merging */
+  const fetchCorkboardEntries = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("corkboard_entries")
+        .select("*")
+        .eq("org_id", orgState.sortedOrgs[0].id); // Fetch events for the first organization as an example
+        // .eq("type", "food"); // Example filter for type, can be adjusted as needed
+      if (error) {
+        console.error("Error fetching events:", error);
+      } else {
+        console.log("Fetched events for org:", orgState.sortedOrgs[0].id);
+        console.log("Fetched events:", data);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+  }
+  /* Fetches an unsorted list of all organizations available when the screen is initially loaded */
+
   const fetchUserOrgs = async () => {
     try {
       const { data, error } = await supabase
@@ -273,8 +293,8 @@ to prevent duplicate entries, so this will only work if the user has not already
         </View>
         <View style={styles.nextButton}>
           <Button
-            title="Log user joined orgs"
-            onPress={() => fetchUserOrgs()}
+            title="Log org entries for first org"
+            onPress={() => fetchCorkboardEntries()}
           />
         </View>
       </ScrollView>

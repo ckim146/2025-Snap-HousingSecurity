@@ -17,12 +17,12 @@ import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-//added
 import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 import { LocationCard } from "../components/LocationCard";
 import { MapFilterPanel } from "../components/MapFilterPanel"; 
+import  useCorkboardEvents  from "../utils/hooks/GetCorkboardEvents";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -33,6 +33,7 @@ export default function MapScreen({ navigation }) {
   const [markerLocations, setMarkerLocations] = useState([]);
   const PLACES_API_KEY = process.env.EXPO_PUBLIC_PLACES_KEY;
   const [markerVersion, setMarkerVersion] = useState(0);
+  const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
 
@@ -106,7 +107,19 @@ export default function MapScreen({ navigation }) {
       icon: "shirt-outline",
     },
   ];
-
+useEffect(() => {
+  if (!loading) {
+    console.log("Fetched userOrgs:", userOrgs);
+    console.log("Fetched entries:", entries);
+    setMarkerLocations((prev) => [...prev, ...entries.map(entry => ({
+      latitude: entry.location.latitude,
+      longitude: entry.location.longitude,
+      title: entry.title,
+      description: entry.description,
+      id: entry.id,
+    }))]);
+  }
+}, [userOrgs, entries, loading]);
   const fetchData = async () => {
     try {
       const { data, error } = await supabase
@@ -134,6 +147,8 @@ export default function MapScreen({ navigation }) {
     }
   };
 
+
+
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -141,7 +156,7 @@ export default function MapScreen({ navigation }) {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-
+      console.log("fetched orgs", userOrgs);
       let location = await Location.getCurrentPositionAsync({});
       console.log("Location:", location);
       setLocation(location);
@@ -159,34 +174,35 @@ export default function MapScreen({ navigation }) {
       const json = await res.json();
       // console.log(json.results);
 
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("Place details:", data); // helpful for debugging
+      //Fetching using Google Places API
+      // fetch(url)
+      //   .then((res) => res.json())
+      //   .then((data) => {
+      //     console.log("Place details:", data); // helpful for debugging
 
-          if (data.result && data.result.geometry) {
-            const { lat, lng } = data.result.geometry.location;
-            const name = data.result.name || "Unknown Place";
-            console.log("google place details:", lat, lng);
+      //     if (data.result && data.result.geometry) {
+      //       const { lat, lng } = data.result.geometry.location;
+      //       const name = data.result.name || "Unknown Place";
+      //       console.log("google place details:", lat, lng);
 
-            setMarkerLocations((prev) => [
-              ...prev,
-              {
-                latitude: lat,
-                longitude: lng,
-                title: name,
-                description: name,
-                id: placeId,
-              },
-            ]);
-            setMarkerVersion((v) => v + 1);
-          } else {
-            console.warn("Missing geometry or result");
-          }
-        })
-        .catch((err) => {
-          console.error("Fetch error:", err);
-        });
+      //       setMarkerLocations((prev) => [
+      //         ...prev,
+      //         {
+      //           latitude: lat,
+      //           longitude: lng,
+      //           title: name,
+      //           description: name,
+      //           id: placeId,
+      //         },
+      //       ]);
+      //       setMarkerVersion((v) => v + 1);
+      //     } else {
+      //       console.warn("Missing geometry or result");
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.error("Fetch error:", err);
+      //   });
     })();
   }, []);
 
