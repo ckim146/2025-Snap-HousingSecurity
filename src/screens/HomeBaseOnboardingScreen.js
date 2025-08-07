@@ -62,7 +62,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
           visibleOrgs: data.slice(0, 3),
           sortedOrgs: data, 
         })); // Display only the first 3 organizations
-        console.log("org length", data.length);
+
       }
       console.log("Fetched org names:", data.map((org) => org.name));
     } catch (error) {
@@ -214,11 +214,11 @@ to prevent duplicate entries, so this will only work if the user has not already
         <View
           style={[
             styles.Events,
-            { display: orgState.orgContainerVisible ? "flex" : "none" },
+            { display: true ? "flex" : "none" },
           ]}
         >
           {/* Mapping of organization cards from orgs state variable. */}
-          {!orgState.isSorting ? (
+          {/*!orgState.isSorting*/ true ? (
             orgState.visibleOrgs.length > 0 ? (
               orgState.visibleOrgs.map((org, index) => (
                 <TouchableOpacity

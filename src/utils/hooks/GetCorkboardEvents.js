@@ -12,7 +12,7 @@ export default function useCorkboardEvents(selectedOrgId) {
     const fetchUserOrgs = async () => {
       const { data, error } = await supabase
         .from("org_user_assignments")
-        .select("org_id, organizations(name)")
+        .select("org_id")
         .eq("user_id", user.id);
       if (!error) setUserOrgs(data);
     };
@@ -27,7 +27,8 @@ export default function useCorkboardEvents(selectedOrgId) {
       const { data, error } = await supabase
         .from("corkboard_entries")
         .select("*")
-        .eq("org_id", selectedOrgId);
+        .in("org_id", orgIds)
+        .eq("user_id", user?.id);
       if (!error) setEntries(data);
       setLoading(false);
     };

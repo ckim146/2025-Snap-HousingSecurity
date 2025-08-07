@@ -21,8 +21,9 @@ import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 import { LocationCard } from "../components/LocationCard";
-import { MapFilterPanel } from "../components/MapFilterPanel"; 
-import  useCorkboardEvents  from "../utils/hooks/GetCorkboardEvents";
+import { MapFilterPanel } from "../components/MapFilterPanel";
+import useCorkboardEvents from "../utils/hooks/GetCorkboardEvents";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -33,7 +34,10 @@ export default function MapScreen({ navigation }) {
   const [markerLocations, setMarkerLocations] = useState([]);
   const PLACES_API_KEY = process.env.EXPO_PUBLIC_PLACES_KEY;
   const [markerVersion, setMarkerVersion] = useState(0);
-  const { userOrgs, entries, loading } = useCorkboardEvents(3);
+  const [userOrgs, setUserOrgs] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const { user } = useAuthentication();
+  // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
 
@@ -107,19 +111,21 @@ export default function MapScreen({ navigation }) {
       icon: "shirt-outline",
     },
   ];
-useEffect(() => {
-  if (!loading) {
-    console.log("Fetched userOrgs:", userOrgs);
-    console.log("Fetched entries:", entries);
-    setMarkerLocations((prev) => [...prev, ...entries.map(entry => ({
-      latitude: entry.location.latitude,
-      longitude: entry.location.longitude,
-      title: entry.title,
-      description: entry.description,
-      id: entry.id,
-    }))]);
-  }
-}, [userOrgs, entries, loading]);
+  // useEffect(() => {
+  //   console.log(loading);
+  //   if (!loading) {
+  //     console.log("Fetched userOrgs:", userOrgs);
+  //     console.log("Fetched entries:", entries);
+  //     setMarkerLocations((prev) => [...prev, ...entries.map(entry => ({
+  //       latitude: entry.location.latitude,
+  //       longitude: entry.location.longitude,
+  //       title: entry.title,
+  //       description: entry.description,
+  //       id: entry.id,
+  //     }))]);
+  //   }
+  // }, [userOrgs, entries, loading]);
+
   const fetchData = async () => {
     try {
       const { data, error } = await supabase
@@ -147,16 +153,23 @@ useEffect(() => {
     }
   };
 
-
+  const fetchUserOrgs = async () => {
+    const { data, error } = await supabase
+      .from("org_user_assignments")
+      .select("org_id")
+      .eq("user_id", user.id);
+    if (!error) setUserOrgs(data);
+  };
 
   useEffect(() => {
     (async () => {
+      if (!user?.id) return;
+
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-      console.log("fetched orgs", userOrgs);
       let location = await Location.getCurrentPositionAsync({});
       console.log("Location:", location);
       setLocation(location);
@@ -167,6 +180,8 @@ useEffect(() => {
         longitudeDelta: 0.0421,
       });
       fetchData();
+      fetchUserOrgs();
+      
 
       const res = await fetch(
         `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
@@ -204,7 +219,7 @@ useEffect(() => {
       //     console.error("Fetch error:", err);
       //   });
     })();
-  }, []);
+  }, [user?.id]);
 
   const mapRef = useRef(null);
 
@@ -229,23 +244,19 @@ useEffect(() => {
   let text = "Waiting...";
   text = JSON.stringify(location);
 
-
   const handleMapPress = async (event) => {
     //COORDINATE = ACTUAL COORDINATES
-  const { coordinate } = event.nativeEvent; //onpress to get coordinates
-  console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
-  
-      const [place] = await Location.reverseGeocodeAsync(coordinate);
-     const placeName = place.name || `${place.street}, ${place.city}`;
+    const { coordinate } = event.nativeEvent; //onpress to get coordinates
+    console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
 
+    const [place] = await Location.reverseGeocodeAsync(coordinate);
+    const placeName = place.name || `${place.street}, ${place.city}`;
 
-setSelectedPlace({
-       name: placeName,
-      
-});
-setModalVisible(true);
-
-}
+    setSelectedPlace({
+      name: placeName,
+    });
+    setModalVisible(true);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -260,27 +271,23 @@ setModalVisible(true);
             console.log("Map pressed at:", e.nativeEvent.coordinate);
           }}
         >
-
-
           {/* adding markers to the map */}
-          {markerLocations.map(
-            (marker, index) => {
-              return (
-                <Marker
-                  key={`${marker.id}`}
-                  coordinate={{
-                    latitude: marker.latitude,
-                    longitude: marker.longitude,
-                  }}
-                  onPress={() => console.log("Marker pressed:", marker.title)}
-                >
-                  <View style={styles.iconWrapper}>
-                    <Ionicons name="location-sharp" size={30} color="#FF5733" />
-                  </View>
-                </Marker>
-              )
-            }
-          )}
+          {markerLocations.map((marker, index) => {
+            return (
+              <Marker
+                key={`${marker.id}`}
+                coordinate={{
+                  latitude: marker.latitude,
+                  longitude: marker.longitude,
+                }}
+                onPress={() => console.log("Marker pressed:", marker.title)}
+              >
+                <View style={styles.iconWrapper}>
+                  <Ionicons name="location-sharp" size={30} color="#FF5733" />
+                </View>
+              </Marker>
+            );
+          })}
         </MapView>
 
         <View style={styles.homeBaseToggleButton}>
@@ -291,11 +298,10 @@ setModalVisible(true);
             onPress={() => setHomeBaseMode(!homeBaseMode)}
           />
         </View>
-          <MapFilterPanel
-            collapsedText="Tap to filter"
-            expandedText="Filter options will go here"
-          />
-
+        <MapFilterPanel
+          collapsedText="Tap to filter"
+          expandedText="Filter options will go here"
+        />
 
         <View
           style={[
@@ -303,7 +309,6 @@ setModalVisible(true);
             { bottom: tabBarHeight - insets.bottom + TAB_BAR_PADDING },
           ]}
         >
-                            
           <View style={styles.locationContainer}>
             <TouchableOpacity
               style={[styles.userLocation, styles.shadow]}
