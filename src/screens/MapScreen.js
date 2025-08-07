@@ -37,6 +37,7 @@ export default function MapScreen({ navigation }) {
   const [userOrgs, setUserOrgs] = useState([]);
   const [entries, setEntries] = useState([]);
   const { user } = useAuthentication();
+  const [currOrgIndex, setCurrOrgIndex] = useState(0);
   // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
@@ -156,7 +157,7 @@ export default function MapScreen({ navigation }) {
   const fetchUserOrgs = async () => {
     const { data, error } = await supabase
       .from("org_user_assignments")
-      .select("org_id")
+      .select(`org_id, organizations(name, logo)`)
       .eq("user_id", user.id);
     if (!error) setUserOrgs(data);
   };
@@ -181,7 +182,6 @@ export default function MapScreen({ navigation }) {
       });
       fetchData();
       fetchUserOrgs();
-      
 
       const res = await fetch(
         `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
@@ -295,7 +295,10 @@ export default function MapScreen({ navigation }) {
             title={
               homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"
             }
-            onPress={() => setHomeBaseMode(!homeBaseMode)}
+            onPress={() => {
+              setHomeBaseMode(!homeBaseMode);
+              console.log("userOrgs:", userOrgs);
+            }}
           />
         </View>
         <MapFilterPanel
@@ -326,6 +329,46 @@ export default function MapScreen({ navigation }) {
             >
               <Ionicons name="navigate" size={15} color="black" />
             </TouchableOpacity>
+          </View>
+          <View style={styles.orgPanel}>
+            <View style={styles.orgScroller}>
+              <Pressable
+                onPress={() => {
+                  setCurrOrgIndex((prevIndex) => {
+                    const nextIndex =
+                      (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                    return nextIndex;
+                    console.log("Previous org index:", nextIndex)
+                  });
+                }}
+              >
+                <Ionicons
+                  name="chevron-back-outline"
+                  size={20}
+                  color="black"
+                  style={{ alignSelf: "flex-end" }}
+                />
+              </Pressable>
+              <Image
+                style={styles.orgImage}
+                source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
+              />
+              <Pressable
+                onPress={() => {
+                  setCurrOrgIndex((prevIndex) => {
+                    const nextIndex = (prevIndex + 1) % userOrgs.length;
+                    return nextIndex;
+                  });
+                }}
+              >
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={20}
+                  color="black"
+                  style={{ alignSelf: "flex-end" }}
+                />
+              </Pressable>
+            </View>
           </View>
           <View style={[styles.bitmojiContainer, styles.shadow]}>
             <Pressable
@@ -540,5 +583,33 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     zIndex: 999,
     elevation: 10,
+  },
+  orgPanel: {
+    // position: "absolute",
+    // top: 10,
+    // left: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    zIndex: 999,
+    elevation: 10,
+    width: "100%",
+    height: 100,
+  },
+  orgScroller: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    // marginBottom: 10,
+    alignSelf: "center",
+  },
+  orgImage: {
+    width: 50,
+    height: 50,
+    marginHorizontal: 10,
+    alignSelf: "center",
   },
 });
