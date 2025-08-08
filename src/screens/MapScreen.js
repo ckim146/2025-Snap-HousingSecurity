@@ -154,6 +154,35 @@ export default function MapScreen({ navigation }) {
     }
   };
 
+  const fetchEntries = async () => {
+    const { data, error } = await supabase
+      .from("corkboard_entries")
+      .select("*")
+      // .in("org_id", userOrgs[0]?.org_id) //for a list of orgs
+      .eq("org_id", userOrgs[currOrgIndex]?.org_id); // for a single org
+    if (!error && data) {
+      setEntries(data);
+      setMarkerLocations(data.map((entry) => entry.location));
+    }
+  };
+
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (userOrgs.length > 0 && userOrgs[currOrgIndex]?.org_id) {
+      fetchEntries();
+    }
+  }, [userOrgs, currOrgIndex]);
+  //Runs after the above useEffect (fetchEntries). Ensures entries are populated before setting markerLocations
+  useEffect(() => {
+  if (entries && entries.length > 0) {
+    setMarkerLocations(entries.map((entry) => entry.location));
+  } else {
+    setMarkerLocations([]);
+  }
+}, [entries]);
+
+
+  //User IDs don't match, so this will not work
   const fetchUserOrgs = async () => {
     const { data, error } = await supabase
       .from("org_user_assignments")
@@ -183,10 +212,10 @@ export default function MapScreen({ navigation }) {
       fetchData();
       fetchUserOrgs();
 
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
-      );
-      const json = await res.json();
+      // const res = await fetch(
+      //   `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
+      // );
+      // const json = await res.json();
       // console.log(json.results);
 
       //Fetching using Google Places API
@@ -223,23 +252,23 @@ export default function MapScreen({ navigation }) {
 
   const mapRef = useRef(null);
 
-  useEffect(() => {
-    if (markerLocations.length === 0 || !mapRef.current) return;
+  // useEffect(() => {
+  //   if (markerLocations.length === 0 || !mapRef.current) return;
 
-    const timeout = setTimeout(() => {
-      const last = markerLocations[markerLocations.length - 1];
-      console.log("Animating to last marker:", last);
+  //   const timeout = setTimeout(() => {
+  //     const last = markerLocations[markerLocations.length - 1];
+  //     console.log("Animating to last marker:", last);
 
-      mapRef.current.animateToRegion({
-        latitude: last.latitude,
-        longitude: last.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }, 100); // Delay ensures markers are mounted first
+  //     mapRef.current.animateToRegion({
+  //       latitude: last.latitude,
+  //       longitude: last.longitude,
+  //       latitudeDelta: 0.01,
+  //       longitudeDelta: 0.01,
+  //     });
+  //   }, 100); // Delay ensures markers are mounted first
 
-    return () => clearTimeout(timeout);
-  }, [markerVersion]); // Trigger only when new marker is added
+  //   return () => clearTimeout(timeout);
+  // }, [markerVersion]); // Trigger only when new marker is added
 
   let text = "Waiting...";
   text = JSON.stringify(location);
@@ -272,7 +301,7 @@ export default function MapScreen({ navigation }) {
           }}
         >
           {/* adding markers to the map */}
-          {markerLocations.map((marker, index) => {
+          {markerLocations?.map((marker, index) => {
             return (
               <Marker
                 key={`${marker.id}`}
@@ -297,14 +326,16 @@ export default function MapScreen({ navigation }) {
             }
             onPress={() => {
               setHomeBaseMode(!homeBaseMode);
-              console.log("userOrgs:", userOrgs);
+              console.log("marker locs", markerLocations);
+              // console.log("userOrgs:", userOrgs);
+              // console.log("entries:", entries);
             }}
           />
         </View>
-        <MapFilterPanel
+        {/* <MapFilterPanel
           collapsedText="Tap to filter"
           expandedText="Filter options will go here"
-        />
+        /> */}
 
         <View
           style={[
@@ -338,7 +369,7 @@ export default function MapScreen({ navigation }) {
                     const nextIndex =
                       (prevIndex - 1 + userOrgs.length) % userOrgs.length;
                     return nextIndex;
-                    console.log("Previous org index:", nextIndex)
+                    console.log("Previous org index:", nextIndex);
                   });
                 }}
               >
