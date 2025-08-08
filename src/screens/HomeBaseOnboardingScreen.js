@@ -199,9 +199,10 @@ to prevent duplicate entries, so this will only work if the user has not already
 
   return (
     <View style={styles.EventScreen}>
-      <Text style={styles.mainHeader}>Community Suggestions</Text>
+      <Text style={styles.mainHeader}>Welcome to</Text>
+      <Text style={[styles.mainHeader, {fontSize: 32, marginTop: 0,}]}>Home Base</Text>
       <TextInput
-        style={{ margin: 20, borderWidth: 1, padding: 10 }}
+        style={styles.searchInput}
         value={userInput}
         onChangeText={setUserInput}
         placeholder="Describe your interests or needs"
@@ -289,14 +290,15 @@ to prevent duplicate entries, so this will only work if the user has not already
           <Button
             title="Next"
             onPress={() => navigation.navigate("Homebase")}
+            color={"#f5d4a9"}
           />
         </View>
-        <View style={styles.nextButton}>
+        {/* <View style={styles.nextButton}>
           <Button
             title="Log org entries for first org"
             onPress={() => fetchCorkboardEntries()}
           />
-        </View>
+        </View> */}
       </ScrollView>
       <AddEvent
         isVisible={visible}
@@ -388,12 +390,13 @@ const styles = StyleSheet.create({
   },
   EventScreen: {
     height: "100%",
+    backgroundColor: "#a67637"
   },
   orgContainer: {
     width: "90%",
     height: 120,
     padding: 10,
-    backgroundColor: "#ffffffff",
+    backgroundColor: "#f5d4a9",
     borderRadius: 10,
     marginBottom: 20,
     alignItems: "center",
@@ -412,11 +415,27 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -15 }], // half of icon size to center vertically
   },
   mainHeader: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
-    textAlign: "left",
+    textAlign: "center",
+    color: "#473927",
     marginLeft: 40,
     marginTop: 10,
-    marginBottom: 10,
+    marginBottom: 0,
   },
+  searchInput: {
+    margin: 20, 
+    borderWidth: 0,
+    borderRadius: 100, 
+    padding: 10,
+    backgroundColor: "#f5d4a9"
+  },
+  nextButton: {
+    borderRadius: 100,
+    backgroundColor: "#7a5728",
+    width: 120,
+    alignSelf: "center",
+    padding: 5,
+  }
+  
 });
