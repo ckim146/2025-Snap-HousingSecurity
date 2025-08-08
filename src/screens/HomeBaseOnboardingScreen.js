@@ -201,16 +201,22 @@ to prevent duplicate entries, so this will only work if the user has not already
     <View style={styles.EventScreen}>
       <Text style={styles.mainHeader}>Welcome to</Text>
       <Text style={[styles.mainHeader, {fontSize: 32, marginTop: 0,}]}>Home Base</Text>
+      <View style={styles.searchBarContainer}>
       <TextInput
         style={styles.searchInput}
         value={userInput}
         onChangeText={setUserInput}
         placeholder="Describe your interests or needs"
       />
+      <IonIcon name="search" size={20} color="#7a5728" style={{position: "absolute", left:15,}} />
+      </View>
+      <View style={styles.findButton}>
       <Button
-        title="Show my new homes"
+        title="Find Communities"
         onPress={() => sortOrgsByRelevance(userInput, orgs)}
+        color={"#f5d4a9"}
       />
+      </View>
       <ScrollView>
         <View
           style={[
@@ -419,16 +425,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#473927",
-    marginLeft: 40,
     marginTop: 10,
     marginBottom: 0,
   },
   searchInput: {
-    margin: 20, 
+    // margin: 20, 
     borderWidth: 0,
     borderRadius: 100, 
     padding: 10,
-    backgroundColor: "#f5d4a9"
+    backgroundColor: "#f5d4a9",
+    width: "100%",
+    paddingLeft: 45, 
   },
   nextButton: {
     borderRadius: 100,
@@ -436,6 +443,21 @@ const styles = StyleSheet.create({
     width: 120,
     alignSelf: "center",
     padding: 5,
-  }
+  },
+    searchBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    width: 350,
+    marginTop: 10
+  },
+    findButton: {
+    borderRadius: 100,
+    backgroundColor: "#7a5728",
+    width: 200,
+    alignSelf: "center",
+    padding: 5,
+    marginTop: 15
+  },
   
 });
