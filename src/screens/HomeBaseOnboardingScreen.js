@@ -19,7 +19,8 @@ import orgIcon from "../../assets/Illuminati.png";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
-  import { useAuthentication } from "../utils/hooks/useAuthentication";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
+import Swiper from "react-native-deck-swiper";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -37,6 +38,13 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     isSorting: true,
     orgContainerVisible: false,
   });
+
+  const cardData = [
+    { id: 1, title: "Card 1", content: "First card content" },
+    { id: 2, title: "Card 2", content: "Second card content" },
+    { id: 3, title: "Card 3", content: "Third card content" },
+  ];
+  const [cards, setCards] = useState(cardData);
 
   function toggleComponent() {
     setVisible(!visible);
@@ -60,11 +68,13 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         setOrgState((prevState) => ({
           ...prevState,
           visibleOrgs: data.slice(0, 3),
-          sortedOrgs: data, 
+          sortedOrgs: data,
         })); // Display only the first 3 organizations
-
       }
-      console.log("Fetched org names:", data.map((org) => org.name));
+      console.log(
+        "Fetched org names:",
+        data.map((org) => org.name)
+      );
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -159,7 +169,7 @@ to prevent duplicate entries, so this will only work if the user has not already
         .from("corkboard_entries")
         .select("*")
         .eq("org_id", orgState.sortedOrgs[0].id); // Fetch events for the first organization as an example
-        // .eq("type", "food"); // Example filter for type, can be adjusted as needed
+      // .eq("type", "food"); // Example filter for type, can be adjusted as needed
       if (error) {
         console.error("Error fetching events:", error);
       } else {
@@ -169,7 +179,7 @@ to prevent duplicate entries, so this will only work if the user has not already
     } catch (error) {
       console.error("Unexpected error:", error);
     }
-  }
+  };
   /* Fetches an unsorted list of all organizations available when the screen is initially loaded */
 
   const fetchUserOrgs = async () => {
@@ -200,63 +210,86 @@ to prevent duplicate entries, so this will only work if the user has not already
   return (
     <View style={styles.EventScreen}>
       <Text style={styles.mainHeader}>Welcome to</Text>
-      <Text style={[styles.mainHeader, {fontSize: 32, marginTop: 0,}]}>Home Base</Text>
+      <Text style={[styles.mainHeader, { fontSize: 32, marginTop: 0 }]}>
+        Home Base
+      </Text>
       <View style={styles.searchBarContainer}>
-      <TextInput
-        style={styles.searchInput}
-        value={userInput}
-        onChangeText={setUserInput}
-        placeholder="Describe your interests or needs"
-      />
-      <IonIcon name="search" size={20} color="#7a5728" style={{position: "absolute", left:15,}} />
+        <TextInput
+          style={styles.searchInput}
+          value={userInput}
+          onChangeText={setUserInput}
+          placeholder="Describe your interests or needs"
+        />
+        <IonIcon
+          name="search"
+          size={20}
+          color="#7a5728"
+          style={{ position: "absolute", left: 15 }}
+        />
       </View>
       <View style={styles.findButton}>
-      <Button
-        title="Find Communities"
-        onPress={() => sortOrgsByRelevance(userInput, orgs)}
-        color={"#f5d4a9"}
-      />
+        <Button
+          title="Find Communities"
+          onPress={() => sortOrgsByRelevance(userInput, orgs)}
+          color={"#f5d4a9"}
+        />
       </View>
+              <View style={styles.cardContainer}>
+        <Swiper
+          cards={cards}
+          renderCard={(card) => (
+            <View style={styles.card}>
+              <Text style={styles.title}>{card.title}</Text>
+              <Text>{card.content}</Text>
+            </View>
+          )}
+          onSwiped={() => console.log("swiped")}
+          cardIndex={0}
+          backgroundColor={"#f0f0f0"}
+          stackSize={3}
+          stackSeparation={15}
+          animateCardOpacity
+          // disableBottomSwipe
+          // disableTopSwipe
+        />
+         </View>
       <ScrollView>
-        <View
-          style={[
-            styles.Events,
-            { display: true ? "flex" : "none" },
-          ]}
-        >
+        <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
           {/* Mapping of organization cards from orgs state variable. */}
-          {/*!orgState.isSorting*/ true ? (
-            orgState.visibleOrgs.length > 0 ? (
-              orgState.visibleOrgs.map((org, index) => (
-                <TouchableOpacity
-                  key={org.id}
-                  style={styles.orgContainer}
-                  onPress={() => submitToSupabase(org)}
-                >
-                  <Image
-                    source={{ uri: org.logo }}
-                    style={{ width: "30%", height: 100, borderRadius: 10 }}
-                  />
-                  <View
-                    style={{
-                      flex: 1,
-                      flexDirection: "column",
-                      justifyContent: "flex-start",
-                      marginLeft: 10,
-                    }}
+          {
+            /*!orgState.isSorting*/ true ? (
+              orgState.visibleOrgs.length > 0 ? (
+                orgState.visibleOrgs.map((org, index) => (
+                  <TouchableOpacity
+                    key={org.id}
+                    style={styles.orgContainer}
+                    onPress={() => submitToSupabase(org)}
                   >
-                    <Text style={styles.title}>{org.name}</Text>
-                    <Text style={styles.subtitle}>{org.description}</Text>
-                  </View>
-                  <View style={styles.plusButtonContainer}>
-                    <IonIcon name="add-outline" size={30} color="black" />
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text>Loading organizations...</Text>
-            )
-          ) : null}
+                    <Image
+                      source={{ uri: org.logo }}
+                      style={{ width: "30%", height: 100, borderRadius: 10 }}
+                    />
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: "column",
+                        justifyContent: "flex-start",
+                        marginLeft: 10,
+                      }}
+                    >
+                      <Text style={styles.title}>{org.name}</Text>
+                      <Text style={styles.subtitle}>{org.description}</Text>
+                    </View>
+                    <View style={styles.plusButtonContainer}>
+                      <IonIcon name="add-outline" size={30} color="black" />
+                    </View>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text>Loading organizations...</Text>
+              )
+            ) : null
+          }
 
           {/* {orgs.map((event) => ( // Uncomment when organization table is created
             <TouchableOpacity
@@ -292,6 +325,7 @@ to prevent duplicate entries, so this will only work if the user has not already
             </TouchableOpacity>
           ))} */}
         </View>
+
         <View style={styles.nextButton}>
           <Button
             title="Next"
@@ -305,7 +339,10 @@ to prevent duplicate entries, so this will only work if the user has not already
             onPress={() => fetchCorkboardEntries()}
           />
         </View> */}
+
       </ScrollView>
+     
+
       <AddEvent
         isVisible={visible}
         onClose={() => {
@@ -396,7 +433,7 @@ const styles = StyleSheet.create({
   },
   EventScreen: {
     height: "100%",
-    backgroundColor: "#a67637"
+    backgroundColor: "#a67637",
   },
   orgContainer: {
     width: "90%",
@@ -429,13 +466,13 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   searchInput: {
-    // margin: 20, 
+    // margin: 20,
     borderWidth: 0,
-    borderRadius: 100, 
+    borderRadius: 100,
     padding: 10,
     backgroundColor: "#f5d4a9",
     width: "100%",
-    paddingLeft: 45, 
+    paddingLeft: 45,
   },
   nextButton: {
     borderRadius: 100,
@@ -444,20 +481,40 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     padding: 5,
   },
-    searchBarContainer: {
+  searchBarContainer: {
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "center",
     width: 350,
-    marginTop: 10
+    marginTop: 10,
   },
-    findButton: {
+  findButton: {
     borderRadius: 100,
     backgroundColor: "#7a5728",
     width: 200,
     alignSelf: "center",
     padding: 5,
-    marginTop: 15
+    marginTop: 15,
   },
-  
+  card: {
+    height: 100,
+    width: 100,
+    borderRadius: 10,
+    backgroundColor: "white",
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    alignSelf: "center",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+    cardContainer: {
+    flex: 1,
+    justifyContent: "center",
+  },
 });
