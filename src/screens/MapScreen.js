@@ -17,11 +17,13 @@ import { supabase } from "../utils/hooks/supabase";
 import { TAB_BAR_PADDING } from "../navigation/UserTab";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
-//added
 import { markers } from "../../assets/markers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Button } from "@rn-vui/base";
 import { LocationCard } from "../components/LocationCard";
+import { MapFilterPanel } from "../components/MapFilterPanel";
+import useCorkboardEvents from "../utils/hooks/GetCorkboardEvents";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -32,6 +34,11 @@ export default function MapScreen({ navigation }) {
   const [markerLocations, setMarkerLocations] = useState([]);
   const PLACES_API_KEY = process.env.EXPO_PUBLIC_PLACES_KEY;
   const [markerVersion, setMarkerVersion] = useState(0);
+  const [userOrgs, setUserOrgs] = useState([]);
+  const [entries, setEntries] = useState([]);
+  const { user } = useAuthentication();
+  const [currOrgIndex, setCurrOrgIndex] = useState(0);
+  // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
 
@@ -105,6 +112,20 @@ export default function MapScreen({ navigation }) {
       icon: "shirt-outline",
     },
   ];
+  // useEffect(() => {
+  //   console.log(loading);
+  //   if (!loading) {
+  //     console.log("Fetched userOrgs:", userOrgs);
+  //     console.log("Fetched entries:", entries);
+  //     setMarkerLocations((prev) => [...prev, ...entries.map(entry => ({
+  //       latitude: entry.location.latitude,
+  //       longitude: entry.location.longitude,
+  //       title: entry.title,
+  //       description: entry.description,
+  //       id: entry.id,
+  //     }))]);
+  //   }
+  // }, [userOrgs, entries, loading]);
 
   const fetchData = async () => {
     try {
@@ -133,14 +154,52 @@ export default function MapScreen({ navigation }) {
     }
   };
 
+  const fetchEntries = async () => {
+    const { data, error } = await supabase
+      .from("corkboard_entries")
+      .select("*")
+      // .in("org_id", userOrgs[0]?.org_id) //for a list of orgs
+      .eq("org_id", userOrgs[currOrgIndex]?.org_id); // for a single org
+    if (!error && data) {
+      setEntries(data);
+      setMarkerLocations(data.map((entry) => entry.location));
+    }
+  };
+
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (userOrgs.length > 0 && userOrgs[currOrgIndex]?.org_id) {
+      fetchEntries();
+    }
+  }, [userOrgs, currOrgIndex]);
+  //Runs after the above useEffect (fetchEntries). Ensures entries are populated before setting markerLocations
+  useEffect(() => {
+  if (entries && entries.length > 0) {
+    setMarkerLocations(entries.map((entry) => entry.location));
+  } else {
+    setMarkerLocations([]);
+  }
+}, [entries]);
+
+
+  //User IDs don't match, so this will not work
+  const fetchUserOrgs = async () => {
+    const { data, error } = await supabase
+      .from("org_user_assignments")
+      .select(`org_id, organizations(name, logo)`)
+      .eq("user_id", user.id);
+    if (!error) setUserOrgs(data);
+  };
+
   useEffect(() => {
     (async () => {
+      if (!user?.id) return;
+
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied");
         return;
       }
-
       let location = await Location.getCurrentPositionAsync({});
       console.log("Location:", location);
       setLocation(location);
@@ -151,84 +210,82 @@ export default function MapScreen({ navigation }) {
         longitudeDelta: 0.0421,
       });
       fetchData();
+      fetchUserOrgs();
 
-      const res = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
-      );
-      const json = await res.json();
+      // const res = await fetch(
+      //   `https://maps.googleapis.com/maps/api/place/textsearch/json?query=coffee+shops+near+37.785834+-122.406417&key=${PLACES_API_KEY}`
+      // );
+      // const json = await res.json();
       // console.log(json.results);
 
-      fetch(url)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("Place details:", data); // helpful for debugging
+      //Fetching using Google Places API
+      // fetch(url)
+      //   .then((res) => res.json())
+      //   .then((data) => {
+      //     console.log("Place details:", data); // helpful for debugging
 
-          if (data.result && data.result.geometry) {
-            const { lat, lng } = data.result.geometry.location;
-            const name = data.result.name || "Unknown Place";
-            console.log("google place details:", lat, lng);
+      //     if (data.result && data.result.geometry) {
+      //       const { lat, lng } = data.result.geometry.location;
+      //       const name = data.result.name || "Unknown Place";
+      //       console.log("google place details:", lat, lng);
 
-            setMarkerLocations((prev) => [
-              ...prev,
-              {
-                latitude: lat,
-                longitude: lng,
-                title: name,
-                description: name,
-                id: placeId,
-              },
-            ]);
-            setMarkerVersion((v) => v + 1);
-          } else {
-            console.warn("Missing geometry or result");
-          }
-        })
-        .catch((err) => {
-          console.error("Fetch error:", err);
-        });
+      //       setMarkerLocations((prev) => [
+      //         ...prev,
+      //         {
+      //           latitude: lat,
+      //           longitude: lng,
+      //           title: name,
+      //           description: name,
+      //           id: placeId,
+      //         },
+      //       ]);
+      //       setMarkerVersion((v) => v + 1);
+      //     } else {
+      //       console.warn("Missing geometry or result");
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     console.error("Fetch error:", err);
+      //   });
     })();
-  }, []);
+  }, [user?.id]);
 
   const mapRef = useRef(null);
 
-  useEffect(() => {
-    if (markerLocations.length === 0 || !mapRef.current) return;
+  // useEffect(() => {
+  //   if (markerLocations.length === 0 || !mapRef.current) return;
 
-    const timeout = setTimeout(() => {
-      const last = markerLocations[markerLocations.length - 1];
+  //   const timeout = setTimeout(() => {
+  //     const last = markerLocations[markerLocations.length - 1];
+  //     console.log("Animating to last marker:", last);
 
-      mapRef.current.animateToRegion({
-        latitude: last.latitude,
-        longitude: last.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
-    }, 100); // Delay ensures markers are mounted first
+  //     mapRef.current.animateToRegion({
+  //       latitude: last.latitude,
+  //       longitude: last.longitude,
+  //       latitudeDelta: 0.01,
+  //       longitudeDelta: 0.01,
+  //     });
+  //   }, 100); // Delay ensures markers are mounted first
 
-    return () => clearTimeout(timeout);
-  }, [markerVersion]); // Trigger only when new marker is added
+  //   return () => clearTimeout(timeout);
+  // }, [markerVersion]); // Trigger only when new marker is added
 
   let text = "Waiting...";
   text = JSON.stringify(location);
 
-  //MODAL
-
   const handleMapPress = async (event) => {
     //COORDINATE = ACTUAL COORDINATES
-  const { coordinate } = event.nativeEvent; //onpress to get coordinates
-  console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
-  
-      const [place] = await Location.reverseGeocodeAsync(coordinate);
-     const placeName = place.name || `${place.street}, ${place.city}`;
+    const { coordinate } = event.nativeEvent; //onpress to get coordinates
+    console.log("Map pressed at:", coordinate.latitude, coordinate.longitude);
 
+    const [place] = await Location.reverseGeocodeAsync(coordinate);
+    const placeName = place.name || `${place.street}, ${place.city}`;
 
-setSelectedPlace({
-       name: placeName,
-      
-});
-setModalVisible(true);
-
-}
+    setSelectedPlace({
+      name: placeName,
+    });
+    setModalVisible(true);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -244,24 +301,22 @@ setModalVisible(true);
           }}
         >
           {/* adding markers to the map */}
-          {markerLocations.map(
-            (marker, index) => {
-              return (
-                <Marker
-                  key={`${marker.id}`}
-                  coordinate={{
-                    latitude: marker.latitude,
-                    longitude: marker.longitude,
-                  }}
-                  onPress={() => console.log("Marker pressed:", marker.title)}
-                >
-                  <View style={styles.iconWrapper}>
-                    <Ionicons name="location-sharp" size={30} color="#FF5733" />
-                  </View>
-                </Marker>
-              )
-            }
-          )}
+          {markerLocations?.map((marker, index) => {
+            return (
+              <Marker
+                key={`${marker.id}`}
+                coordinate={{
+                  latitude: marker.latitude,
+                  longitude: marker.longitude,
+                }}
+                onPress={() => console.log("Marker pressed:", marker.title)}
+              >
+                <View style={styles.iconWrapper}>
+                  <Ionicons name="location-sharp" size={30} color="#FF5733" />
+                </View>
+              </Marker>
+            );
+          })}
         </MapView>
 
         <View style={styles.homeBaseToggleButton}>
@@ -269,9 +324,18 @@ setModalVisible(true);
             title={
               homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"
             }
-            onPress={() => setHomeBaseMode(!homeBaseMode)}
+            onPress={() => {
+              setHomeBaseMode(!homeBaseMode);
+              console.log("marker locs", markerLocations);
+              // console.log("userOrgs:", userOrgs);
+              // console.log("entries:", entries);
+            }}
           />
         </View>
+        {/* <MapFilterPanel
+          collapsedText="Tap to filter"
+          expandedText="Filter options will go here"
+        /> */}
 
         <View
           style={[
@@ -296,6 +360,46 @@ setModalVisible(true);
             >
               <Ionicons name="navigate" size={15} color="black" />
             </TouchableOpacity>
+          </View>
+          <View style={styles.orgPanel}>
+            <View style={styles.orgScroller}>
+              <Pressable
+                onPress={() => {
+                  setCurrOrgIndex((prevIndex) => {
+                    const nextIndex =
+                      (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                    return nextIndex;
+                    console.log("Previous org index:", nextIndex);
+                  });
+                }}
+              >
+                <Ionicons
+                  name="chevron-back-outline"
+                  size={20}
+                  color="black"
+                  style={{ alignSelf: "flex-end" }}
+                />
+              </Pressable>
+              <Image
+                style={styles.orgImage}
+                source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
+              />
+              <Pressable
+                onPress={() => {
+                  setCurrOrgIndex((prevIndex) => {
+                    const nextIndex = (prevIndex + 1) % userOrgs.length;
+                    return nextIndex;
+                  });
+                }}
+              >
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={20}
+                  color="black"
+                  style={{ alignSelf: "flex-end" }}
+                />
+              </Pressable>
+            </View>
           </View>
           <View style={[styles.bitmojiContainer, styles.shadow]}>
             <Pressable
@@ -380,7 +484,6 @@ const styles = StyleSheet.create({
   iconWrapper: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "white", // optional background
     borderRadius: 20,
     padding: 4,
   },
@@ -511,5 +614,33 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     zIndex: 999,
     elevation: 10,
+  },
+  orgPanel: {
+    // position: "absolute",
+    // top: 10,
+    // left: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    padding: 10,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    zIndex: 999,
+    elevation: 10,
+    width: "100%",
+    height: 100,
+  },
+  orgScroller: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    // marginBottom: 10,
+    alignSelf: "center",
+  },
+  orgImage: {
+    width: 50,
+    height: 50,
+    marginHorizontal: 10,
+    alignSelf: "center",
   },
 });

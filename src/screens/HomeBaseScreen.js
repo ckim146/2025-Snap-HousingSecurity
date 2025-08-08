@@ -22,7 +22,7 @@ import pictureofbitmoji from "../../assets/pictureofbitmoji.png";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [orgs, setOrgs] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 const [selectedToggle, setSelectedToggle] = useState("All");
@@ -40,11 +40,11 @@ const [selectedToggle, setSelectedToggle] = useState("All");
 
   const fetchData = async () => {
     try {
-      const { data, error } = await supabase.from("event_table").select("*");
+      const { data, error } = await supabase.from("organizations").select("*");
       if (error) {
         console.error("Error fetching data:", error);
       } else {
-        setEvents(data);
+        setOrgs(data);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -234,7 +234,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
         <View style={styles.cardHeader}>
         <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
                 <Pressable //Arrow Icon
-          onPress={() => navigation.navigate("Notifications")}
+          onPress={() => navigation.navigate("UserTab", {screen: "Map"})}
           style={{ marginLeft: "auto" }}
         >
           <IonIcon name="chevron-forward-outline" size={32} color="black" />
@@ -248,7 +248,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
 
       <ScrollView>
         <View style={styles.Events}>
-          {/* {events.map((event) => (
+          {/* {orgs.map((event) => (
             <TouchableOpacity
               key={event.id}
               onPress={() => handleCardTouch(event)}
