@@ -44,17 +44,17 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [cards, setCards] = useState(orgCardData);
 
   const orgCardData = [
-    { id: 1, title: "Free Haircuts", age: "30 mins", date: "10 Jul", type: "etc" },
-    { id: 2, title: "Resume Workshop", age: "1 hour", date: "10 Aug", type: "skills" },
-    { id: 3, title: "Mural Painting @ Campus", age: "13 mins", date: "7 Aug", type: "social" },
-    { id: 4, title: "New book vouchers ready in the office for students", age: "4 mins", date: "7 Aug", type: "social", user: "Ben", profilePic: cardProfilePic},
+    { id: 1, title: "Free Haircuts", age: "30 mins", date: "Mon, 8/18", time:"3-4pm", type: "ETC" },
+    { id: 2, title: "Resume Workshop", age: "1 hour", date: "Wed, 8/20", time:"12-1pm", type: "Skills" },
+    { id: 3, title: "Mural Painting @ Campus", age: "13 mins", date: "Tues, 8/19", time:"10-4pm",  type: "Social" },
+    { id: 4, title: "New book vouchers ready in the office for students", age: "4 mins", date: "7 Aug", type: "Tips", user: "Ben", profilePic: cardProfilePic},
   ];
 
   const colorCategoryMap = {
-    skills: "rgb(255, 211, 216)",
-    etc: "rgb(203, 249, 228)",
-    tips: "rgb(255, 226, 186)",
-    social: "rgb(235, 215, 254)"
+    Skills: "rgb(255, 211, 216)",
+    ETC: "rgb(203, 249, 228)",
+    Tips: "rgb(255, 226, 186)",
+    Social: "rgb(235, 215, 254)"
 
   }
   function toggleComponent() {
@@ -78,7 +78,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         setOrgs(data);
         setOrgState((prevState) => ({
           ...prevState,
-          visibleOrgs: data.slice(0, 3),
+          visibleOrgs: data.slice(2, 5),
           sortedOrgs: data,
         })); // Display only the first 3 organizations
       }
@@ -254,7 +254,10 @@ to prevent duplicate entries, so this will only work if the user has not already
                 <Text style={{alignSelf: "center", color: Color(colorCategoryMap[card.type]).darken(0.7).rgb().string()}}>{card.type}</Text>
               </View>
               <Text style={styles.title}>{card.title}</Text>
+              <View style={{flexDirection: "column"}}>
               <Text style={[styles.title, {marginBottom: 5, marginTop: 30}]}>{card.date}</Text>
+              <Text>{card.time}</Text>
+              </View>
               <View style={{flexDirection: "row", justifyContent: "space-between"}}>
                 <Text>{card.age} ago</Text>
                 <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
