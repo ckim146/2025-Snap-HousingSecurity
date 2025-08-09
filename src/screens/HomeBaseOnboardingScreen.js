@@ -21,6 +21,8 @@ import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
 import Swiper from "react-native-deck-swiper";
+import cardProfilePic from "../../assets/cardProfilePic.png"
+import Color from "color";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -39,13 +41,22 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     orgContainerVisible: false,
   });
 
-  const cardData = [
-    { id: 1, title: "Card 1", content: "First card content" },
-    { id: 2, title: "Card 2", content: "Second card content" },
-    { id: 3, title: "Card 3", content: "Third card content" },
-  ];
-  const [cards, setCards] = useState(cardData);
+  const [cards, setCards] = useState(orgCardData);
 
+  const orgCardData = [
+    { id: 1, title: "Free Haircuts", age: "30 mins", date: "10 Jul", type: "etc" },
+    { id: 2, title: "Resume Workshop", age: "1 hour", date: "10 Aug", type: "skills" },
+    { id: 3, title: "Mural Painting @ Campus", age: "13 mins", date: "7 Aug", type: "social" },
+    { id: 4, title: "New book vouchers ready in the office for students", age: "4 mins", date: "7 Aug", type: "social", user: "Ben", profilePic: cardProfilePic},
+  ];
+
+  const colorCategoryMap = {
+    skills: "rgb(255, 211, 216)",
+    etc: "rgb(203, 249, 228)",
+    tips: "rgb(255, 226, 186)",
+    social: "rgb(235, 215, 254)"
+
+  }
   function toggleComponent() {
     setVisible(!visible);
     console.log(visible);
@@ -234,13 +245,20 @@ to prevent duplicate entries, so this will only work if the user has not already
           color={"#f5d4a9"}
         />
       </View>
-              <View style={styles.cardContainer}>
+      <View style={styles.cardContainer}>
         <Swiper
-          cards={cards}
+          cards={orgCardData}
           renderCard={(card) => (
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colorCategoryMap[card.type] }]}>
+              <View style={[styles.categoryTag, {backgroundColor: Color(colorCategoryMap[card.type]).lighten(0.1).rgb().string(), alignSelf: 'flex-start', borderColor: Color(colorCategoryMap[card.type]).darken(0.7).rgb().string()}]}>
+                <Text style={{alignSelf: "center", color: Color(colorCategoryMap[card.type]).darken(0.7).rgb().string()}}>{card.type}</Text>
+              </View>
               <Text style={styles.title}>{card.title}</Text>
-              <Text>{card.content}</Text>
+              <Text style={[styles.title, {marginBottom: 5, marginTop: 30}]}>{card.date}</Text>
+              <View style={{flexDirection: "row", justifyContent: "space-between"}}>
+                <Text>{card.age} ago</Text>
+                <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
+              </View>
             </View>
           )}
           onSwiped={() => console.log("swiped")}
@@ -252,7 +270,7 @@ to prevent duplicate entries, so this will only work if the user has not already
           // disableBottomSwipe
           // disableTopSwipe
         />
-         </View>
+      </View>
       <ScrollView>
         <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
           {/* Mapping of organization cards from orgs state variable. */}
@@ -339,9 +357,7 @@ to prevent duplicate entries, so this will only work if the user has not already
             onPress={() => fetchCorkboardEntries()}
           />
         </View> */}
-
       </ScrollView>
-     
 
       <AddEvent
         isVisible={visible}
@@ -497,8 +513,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   card: {
-    height: 100,
-    width: 100,
+        height: 200,
+    width: 200,
+    // flex: 1,                // Fill whatever space Swiper gives it
     borderRadius: 10,
     backgroundColor: "white",
     padding: 20,
@@ -506,15 +523,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
-    alignSelf: "center",
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
   },
-    cardContainer: {
+  cardContainer: {
     flex: 1,
     justifyContent: "center",
+  },
+    categoryTag: {
+    borderWidth: 1,
+    borderRadius: 100,
+    padding: 5,
+    paddingHorizontal: 20,
+    backgroundColor: "#f5d4a9",
+    alignItems: "center"
   },
 });

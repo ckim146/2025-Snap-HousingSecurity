@@ -18,7 +18,6 @@ import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import { Pressable } from "react-native";
-import pictureofbitmoji from "../../assets/pictureofbitmoji.png";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -149,7 +148,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
             </Pressable>
           </View>
         </View>
-
+</View>
           {/* Filter Tabs */}
 
       <View style={styles.corkBoardCard}>
@@ -246,7 +245,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
 
   </ScrollView>
 
-      <ScrollView>
+      {/* <ScrollView> */}
         <View style={styles.Events}>
           {/* {orgs.map((event) => (
             <TouchableOpacity
