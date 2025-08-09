@@ -21,7 +21,7 @@ import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
 import Swiper from "react-native-deck-swiper";
-import cardProfilePic from "../../assets/cardProfilePic.png"
+import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
@@ -40,23 +40,53 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     isSorting: true,
     orgContainerVisible: false,
   });
-
+  //put into card copmponent
   const [cards, setCards] = useState(orgCardData);
+  const [cardIndex, setCardIndex] = useState(0);
 
+  //Adjust so that it populates with supdabase data. Pass to card component
   const orgCardData = [
-    { id: 1, title: "Free Haircuts", age: "30 mins", date: "Mon, 8/18", time:"3-4pm", type: "ETC" },
-    { id: 2, title: "Resume Workshop", age: "1 hour", date: "Wed, 8/20", time:"12-1pm", type: "Skills" },
-    { id: 3, title: "Mural Painting @ Campus", age: "13 mins", date: "Tues, 8/19", time:"10-4pm",  type: "Social" },
-    { id: 4, title: "New book vouchers ready in the office for students", age: "4 mins", date: "7 Aug", type: "Tips", user: "Ben", profilePic: cardProfilePic},
+    {
+      id: 1,
+      title: "Free Haircuts",
+      age: "30 mins",
+      date: "Mon, 8/18",
+      time: "3-4pm",
+      type: "ETC",
+    },
+    {
+      id: 2,
+      title: "Resume Workshop",
+      age: "1 hour",
+      date: "Wed, 8/20",
+      time: "12-1pm",
+      type: "Skills",
+    },
+    {
+      id: 3,
+      title: "Mural Painting @ Campus",
+      age: "13 mins",
+      date: "Tues, 8/19",
+      time: "10-4pm",
+      type: "Social",
+    },
+    {
+      id: 4,
+      title: "New book vouchers ready in the office for students",
+      age: "4 mins",
+      type: "Tips",
+      user: "Ben",
+      profilePic: cardProfilePic,
+    },
   ];
 
+  //Put into card component later
   const colorCategoryMap = {
     Skills: "rgb(255, 211, 216)",
     ETC: "rgb(203, 249, 228)",
     Tips: "rgb(255, 226, 186)",
-    Social: "rgb(235, 215, 254)"
-
-  }
+    Social: "rgb(235, 215, 254)",
+  };
   function toggleComponent() {
     setVisible(!visible);
     console.log(visible);
@@ -68,7 +98,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     setSelectedEvent(event);
   }
 
-  //Unccomment when organization table is created
+  //Initially fetch unorganized set of orgs
   const fetchData = async () => {
     try {
       const { data, error } = await supabase.from("organizations").select("*");
@@ -82,10 +112,10 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
           sortedOrgs: data,
         })); // Display only the first 3 organizations
       }
-      console.log(
-        "Fetched org names:",
-        data.map((org) => org.name)
-      );
+      // console.log(
+      //   "Fetched org names:",
+      //   data.map((org) => org.name)
+      // );
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -246,25 +276,183 @@ to prevent duplicate entries, so this will only work if the user has not already
         />
       </View>
       <View style={styles.cardContainer}>
+        <View
+          style={[
+            styles.card,
+            {
+              position: "absolute",
+              alignSelf: "center", // center horizontally
+              top: "70%",
+              transform: [
+                { translateX: -100 },
+                { translateY: 12 }, // half of card height to center vertically
+                { rotate: "-7deg" },
+              ],
+              backgroundColor: Color(colorCategoryMap[orgCardData[0].type])
+                .darken(0.2)
+                .rgb()
+                .string(), // match first card's color
+              zIndex: 0,
+            },
+          ]}
+        />
         <Swiper
           cards={orgCardData}
           renderCard={(card) => (
-            <View style={[styles.card, { backgroundColor: colorCategoryMap[card.type] }]}>
-              <View style={[styles.categoryTag, {backgroundColor: Color(colorCategoryMap[card.type]).lighten(0.1).rgb().string(), alignSelf: 'flex-start', borderColor: Color(colorCategoryMap[card.type]).darken(0.7).rgb().string()}]}>
-                <Text style={{alignSelf: "center", color: Color(colorCategoryMap[card.type]).darken(0.7).rgb().string()}}>{card.type}</Text>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colorCategoryMap[card.type] },
+              ]}
+            >
+              {/*The horizontal view containing category and card # */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <View
+                  style={[
+                    styles.categoryTag,
+                    {
+                      backgroundColor: Color(colorCategoryMap[card.type])
+                        .lighten(0.1)
+                        .rgb()
+                        .string(),
+                      alignSelf: "flex-start",
+                      borderColor: Color(colorCategoryMap[card.type])
+                        .darken(0.7)
+                        .rgb()
+                        .string(),
+                    },
+                  ]}
+                >
+                  <Text
+                    style={{
+                      alignSelf: "center",
+                      color: Color(colorCategoryMap[card.type])
+                        .darken(0.7)
+                        .rgb()
+                        .string(),
+                      fontSize: 10,
+                    }}
+                  >
+                    {card.type}
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: Color(colorCategoryMap[card.type])
+                      .darken(0.7)
+                      .rgb()
+                      .string(),
+                  }}
+                >
+                  {cardIndex + 1}/{orgCardData.length}
+                </Text>
               </View>
-              <Text style={styles.title}>{card.title}</Text>
-              <View style={{flexDirection: "column"}}>
-              <Text style={[styles.title, {marginBottom: 5, marginTop: 30}]}>{card.date}</Text>
-              <Text>{card.time}</Text>
+
+              {card.type == "Tips" ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 10,
+                    marginTop: 10,
+                  }}
+                >
+                  <Image
+                    source={card.profilePic}
+                    style={{
+                      resizeMode: "cover",
+                      height: 50,
+                      width: 50,
+                      marginRight: 10,
+                    }}
+                  />
+                  <View style={{ flexDirection: "column" }}>
+                    <Text style={[styles.title, { marginBottom: 0 }]}>
+                      {card.user}
+                    </Text>
+                    <Text
+                      style={{
+                        color: Color(colorCategoryMap[card.type])
+                          .darken(0.5)
+                          .rgb()
+                          .string(),
+                      }}
+                    >
+                      Verified Member
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
+
+              <Text
+                style={{
+                  fontWeight: "700",
+                  fontSize: 22,
+                  color: "#4b3b1f",
+                  marginBottom: 12,
+                }}
+                numberOfLines={5}
+                ellipsizeMode="tail"
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+              >
+                {card.title}
+              </Text>
+              <View style={{ flexDirection: "column" }}>
+                <Text
+                  style={[
+                    styles.title,
+                    {
+                      marginBottom: 0,
+                      marginTop: 0,
+                      color: Color(colorCategoryMap[card.type])
+                        .darken(0.7)
+                        .rgb()
+                        .string(),
+                    },
+                  ]}
+                >
+                  {card.date}
+                </Text>
+                <Text
+                  style={{
+                    color: Color(colorCategoryMap[card.type])
+                      .darken(0.7)
+                      .rgb()
+                      .string(),
+                  }}
+                >
+                  {card.time}
+                </Text>
               </View>
-              <View style={{flexDirection: "row", justifyContent: "space-between"}}>
-                <Text>{card.age} ago</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text
+                  style={{
+                    color: Color(colorCategoryMap[card.type])
+                      .darken(0.5)
+                      .rgb()
+                      .string(),
+                  }}
+                >
+                  {card.age} ago
+                </Text>
                 <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
               </View>
             </View>
           )}
-          onSwiped={() => console.log("swiped")}
+          onSwiped={(index) => setCardIndex(index + 1)}
+          onSwipedAll={() => setCardIndex(0)}
           cardIndex={0}
           backgroundColor={"#f0f0f0"}
           stackSize={3}
@@ -516,32 +704,34 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   card: {
-        height: 200,
+    height: 200,
     width: 200,
-    // flex: 1,                // Fill whatever space Swiper gives it
     borderRadius: 10,
     backgroundColor: "white",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10, // smaller top padding
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
+    justifyContent: "space-between",
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
+    flexShrink: 1,
   },
   cardContainer: {
     flex: 1,
     justifyContent: "center",
   },
-    categoryTag: {
+  categoryTag: {
     borderWidth: 1,
     borderRadius: 100,
-    padding: 5,
+    padding: 2,
     paddingHorizontal: 20,
     backgroundColor: "#f5d4a9",
-    alignItems: "center"
+    alignItems: "center",
   },
 });
