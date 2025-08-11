@@ -18,7 +18,7 @@ import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import { Pressable } from "react-native";
-import pictureofbitmoji from "../../assets/pictureofbitmoji.png";
+import SwipableStack from "../components/SwipableStack";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -149,7 +149,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
             </Pressable>
           </View>
         </View>
-
+</View>
           {/* Filter Tabs */}
 
       <View style={styles.corkBoardCard}>
@@ -194,13 +194,16 @@ const [selectedToggle, setSelectedToggle] = useState("All");
 </ScrollView>
 
     <View style={styles.stickyNoteGrid}>
-    <View style={styles.stickyNote}>
+      
+    {/* <View style={styles.stickyNote}>
       <Text style={styles.noteTitle}>Resume Workshop</Text>
       <Text style={styles.noteDate}>Wed, 8/16</Text>
       <Text style={styles.noteInfo}>2–3pm • Online</Text>
-    </View>
-
-     <View style={styles.stickyNote}>
+    </View> */}
+<SwipableStack />
+<SwipableStack />
+<SwipableStack />
+     {/* <View style={styles.stickyNote}>
     <Text style={styles.noteTitle}>Job Fairs</Text>
     <Text style={styles.noteDate}>Fri, 8/18</Text>
     <Text style={styles.noteInfo}>1–4pm • In Person</Text>
@@ -222,7 +225,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
     <Text style={styles.noteTitle}>Backpack Giveaway</Text>
     <Text style={styles.noteDate}>Sat, 8/24</Text>
     <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
-  </View>
+  </View> */}
 
     {/* You can add more sticky notes or map over an array */}
   </View>
@@ -246,7 +249,7 @@ const [selectedToggle, setSelectedToggle] = useState("All");
 
   </ScrollView>
 
-      <ScrollView>
+      {/* <ScrollView> */}
         <View style={styles.Events}>
           {/* {orgs.map((event) => (
             <TouchableOpacity
