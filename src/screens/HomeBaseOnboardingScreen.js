@@ -302,6 +302,27 @@ to prevent duplicate entries, so this will only work if the user has not already
         />
       </View>
 
+      <View style={styles.cardContainer}>
+        {/* <Swiper
+          cards={cards}
+          renderCard={(card) => (
+            <View style={styles.card}>
+              <Text style={styles.title}>{card.title}</Text>
+              <Text>{card.content}</Text>
+            </View>
+          )}
+          onSwiped={() => console.log("swiped")}
+          cardIndex={0}
+          backgroundColor={"#f0f0f0"}
+          stackSize={3}
+          stackSeparation={15}
+          animateCardOpacity
+          
+          // disableBottomSwipe
+          // disableTopSwipe
+        /> */}
+      </View>
+
       <ScrollView>
         <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
           {/* Mapping of organization cards from orgs state variable. */}
