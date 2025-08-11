@@ -20,7 +20,7 @@ import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
-import Swiper from "react-native-deck-swiper";
+//import Swiper from "react-native-deck-swiper";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -234,8 +234,8 @@ to prevent duplicate entries, so this will only work if the user has not already
           color={"#f5d4a9"}
         />
       </View>
-              <View style={styles.cardContainer}>
-        <Swiper
+      <View style={styles.cardContainer}>
+        {/* <Swiper
           cards={cards}
           renderCard={(card) => (
             <View style={styles.card}>
@@ -249,10 +249,11 @@ to prevent duplicate entries, so this will only work if the user has not already
           stackSize={3}
           stackSeparation={15}
           animateCardOpacity
+          
           // disableBottomSwipe
           // disableTopSwipe
-        />
-         </View>
+        /> */}
+      </View>
       <ScrollView>
         <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
           {/* Mapping of organization cards from orgs state variable. */}
@@ -339,9 +340,7 @@ to prevent duplicate entries, so this will only work if the user has not already
             onPress={() => fetchCorkboardEntries()}
           />
         </View> */}
-
       </ScrollView>
-     
 
       <AddEvent
         isVisible={visible}
@@ -513,7 +512,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-    cardContainer: {
+  cardContainer: {
     flex: 1,
     justifyContent: "center",
   },
