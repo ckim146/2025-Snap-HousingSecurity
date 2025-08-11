@@ -18,11 +18,15 @@ import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import { Pressable } from "react-native";
+
 import pictureofmyorg from "../../assets/pictureofmyorg.png";
 import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useHeaderHeight } from "@react-navigation/elements";
+
+import SwipableStack from "../components/SwipableStack";
+
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -293,6 +297,7 @@ export default function HomeBaseScreen({ route, navigation }) {
           </ImageBackground>
         </View>
 
+
         {/* overlapping brown sheet header */}
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Safe Place for Youth</Text>
@@ -322,7 +327,6 @@ export default function HomeBaseScreen({ route, navigation }) {
               </Pressable> */}
           {/* </View>
           </View> */}
-
           {/* Filter Tabs */}
 
           <View style={styles.corkBoardCard}>
@@ -355,6 +359,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   
   figure out workflow situation 
   */}
+
               {/* search circle goes first */}
               <Pressable
                 style={styles.filterSearch}
@@ -391,6 +396,7 @@ export default function HomeBaseScreen({ route, navigation }) {
       postedAgo="13 mins ago"
       onPress={() => handleCardTouch({ title: "Free Haircuts" })}
     />
+
   </View>
 
   <View style={styles.slotWrap}>
@@ -417,6 +423,7 @@ export default function HomeBaseScreen({ route, navigation }) {
       postedAgo="51 mins ago"
     />
   </View>
+
 
   <View style={styles.slotWrap}>
     <Text style={styles.slotLabel}>Tips</Text>
@@ -455,9 +462,11 @@ export default function HomeBaseScreen({ route, navigation }) {
         </View>
 
       </View> */}
+
           <ScrollView>
             <View style={styles.Events}>
               {/* {orgs.map((event) => (
+
             <TouchableOpacity
               key={event.id}
               onPress={() => handleCardTouch(event)}

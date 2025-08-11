@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React, { use, useEffect, useCallback } from "react";
 import { useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
@@ -11,7 +11,7 @@ import {
   Button,
   TouchableOpacity,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { Pressable, ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
 import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
@@ -20,7 +20,11 @@ import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
-//import Swiper from "react-native-deck-swiper";
+import Swiper from "react-native-deck-swiper";
+import cardProfilePic from "../../assets/cardProfilePic.png";
+import Color from "color";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import EntryInfo from "../components/EntryInfo";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -38,18 +42,80 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     isSorting: true,
     orgContainerVisible: false,
   });
+  //put into card copmponent
+  const [cards, setCards] = useState(orgCardData);
+  const [cardIndex, setCardIndex] = useState(0);
 
-  const cardData = [
-    { id: 1, title: "Card 1", content: "First card content" },
-    { id: 2, title: "Card 2", content: "Second card content" },
-    { id: 3, title: "Card 3", content: "Third card content" },
+  //Adjust so that it populates with supdabase data. Pass to card component
+  const orgCardData = [
+    {
+      id: 1,
+      title: "Free Haircuts",
+      age: "30 mins",
+      date: "Mon, 8/18",
+      time: "3-4pm",
+      type: "ETC",
+      description: "Learn to create a standout resume in Figma, highlight your skills, and format for clarity. Hosted by Jordan Lee, Career Coach at Youth Forward, who will share insider tips and answer your questions.",
+      location: {"latitude": 37.7689, "longitude": -122.4149}
+    },
+    {
+      id: 2,
+      title: "Resume Workshop",
+      age: "1 hour",
+      date: "Wed, 8/20",
+      time: "12-1pm",
+      type: "Skills",
+    },
+    {
+      id: 3,
+      title: "Mural Painting @ Campus",
+      age: "13 mins",
+      date: "Tues, 8/19",
+      time: "10-4pm",
+      type: "Social",
+    },
+    {
+      id: 4,
+      title: "New book vouchers ready in the office for students",
+      age: "4 mins",
+      type: "Tips",
+      user: "Ben",
+      profilePic: cardProfilePic,
+    },
   ];
-  const [cards, setCards] = useState(cardData);
 
-  function toggleComponent() {
-    setVisible(!visible);
-    console.log(visible);
+  //Put into card component later
+  const colorCategoryMap = {
+    Skills: "rgb(255, 211, 216)",
+    ETC: "rgb(203, 249, 228)",
+    Tips: "rgb(255, 226, 186)",
+    Social: "rgb(235, 215, 254)",
+  };
+  function toggleEntryInfoVisible() {
+    setDetailsVisible(true);
+    console.log(detailsVisible);
   }
+
+  //Card tap handler
+  const handleTap = useCallback(() => {
+    console.log("Card tapped");
+    toggleEntryInfoVisible();
+  }, []);
+
+  // Tap gesture — only fires when there's no drag movement
+  const tapGesture = Gesture.Tap()
+    // .maxDuration(250)
+    // .maxDeltaX(5) // ignore if moved horizontally
+    // .maxDeltaY(5) // ignore if moved vertically
+    .onEnd((_, success) => {
+      if (success) {
+        handleTap();
+      }
+    });
+
+const panGesture = Gesture.Pan();
+
+const combinedGesture = Gesture.Simultaneous(tapGesture, panGesture);
 
   function handleCardTouch(event) {
     setDetailsVisible(true);
@@ -57,7 +123,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     setSelectedEvent(event);
   }
 
-  //Unccomment when organization table is created
+  //Initially fetch unorganized set of orgs
   const fetchData = async () => {
     try {
       const { data, error } = await supabase.from("organizations").select("*");
@@ -67,14 +133,14 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
         setOrgs(data);
         setOrgState((prevState) => ({
           ...prevState,
-          visibleOrgs: data.slice(0, 3),
+          visibleOrgs: data.slice(2, 5),
           sortedOrgs: data,
         })); // Display only the first 3 organizations
       }
-      console.log(
-        "Fetched org names:",
-        data.map((org) => org.name)
-      );
+      // console.log(
+      //   "Fetched org names:",
+      //   data.map((org) => org.name)
+      // );
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -234,6 +300,7 @@ to prevent duplicate entries, so this will only work if the user has not already
           color={"#f5d4a9"}
         />
       </View>
+
       <View style={styles.cardContainer}>
         {/* <Swiper
           cards={cards}
@@ -254,6 +321,7 @@ to prevent duplicate entries, so this will only work if the user has not already
           // disableTopSwipe
         /> */}
       </View>
+
       <ScrollView>
         <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
           {/* Mapping of organization cards from orgs state variable. */}
@@ -349,12 +417,20 @@ to prevent duplicate entries, so this will only work if the user has not already
           refreshEvents();
         }}
       />
-      <EventInfo
+      {detailsVisible && 
+
+      <>
+        <View style={styles.overlay} />
+        <EntryInfo
         isVisible={detailsVisible}
         event={selectedEvent}
+        typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
+        org="Youth Forward"
         onClose={() => setDetailsVisible(false)}
       />
+      </>}
     </View>
+    
   );
 }
 
@@ -496,24 +572,38 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   card: {
-    height: 100,
-    width: 100,
+    height: 200,
+    width: 200,
     borderRadius: 10,
     backgroundColor: "white",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10, // smaller top padding
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
-    alignSelf: "center",
+    justifyContent: "space-between",
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 10,
+    flexShrink: 1,
   },
   cardContainer: {
     flex: 1,
     justifyContent: "center",
+  },
+  categoryTag: {
+    borderWidth: 1,
+    borderRadius: 100,
+    padding: 2,
+    paddingHorizontal: 20,
+    backgroundColor: "#f5d4a9",
+    alignItems: "center",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,  // fills entire screen
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent black
   },
 });
