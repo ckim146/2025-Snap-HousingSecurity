@@ -78,7 +78,14 @@ export default function App() {
         <Stack.Screen
           name="Homebase"
           component={HomeBaseScreen}
-          options={{ headerShown: true }}
+          options={{headerShown: true,          // keep the header so you get the back button
+    headerTransparent: true,    // remove the white background
+    headerTitle: "", // remove the title
+    headerTintColor: "#111",
+    // headerStyle: { backgroundColor: "transparent" }, // for @react-navigation/stack
+    // headerShadowVisible: false,
+      headerStyle: { elevation: 0, shadowOpacity: 0, borderBottomWidth: 0 },
+  }}
         />
 
         <Stack.Screen
