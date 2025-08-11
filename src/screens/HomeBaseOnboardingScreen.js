@@ -295,9 +295,10 @@ to prevent duplicate entries, so this will only work if the user has not already
       </View>
       <View style={styles.findButton}>
         <Button
-          title="Find Communities"
+          title="Search"
           onPress={() => sortOrgsByRelevance(userInput, orgs)}
-          color={"#f5d4a9"}
+          color={"black"}
+          style={{fontSize: 5}}
         />
       </View>
 
@@ -487,13 +488,13 @@ const styles = StyleSheet.create({
   },
   EventScreen: {
     height: "100%",
-    backgroundColor: "#a67637",
+    backgroundColor: "#f9f9f9",
   },
   orgContainer: {
     width: "90%",
     height: 120,
     padding: 10,
-    backgroundColor: "#f5d4a9",
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     marginBottom: 20,
     alignItems: "center",
@@ -524,7 +525,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderRadius: 100,
     padding: 10,
-    backgroundColor: "#f5d4a9",
+    backgroundColor: "#ffffff",
     width: "100%",
     paddingLeft: 45,
   },
@@ -543,10 +544,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   findButton: {
-    borderRadius: 100,
-    backgroundColor: "#7a5728",
     width: 200,
-    alignSelf: "center",
+    alignSelf: "flex-end",
     padding: 5,
     marginTop: 15,
   },
