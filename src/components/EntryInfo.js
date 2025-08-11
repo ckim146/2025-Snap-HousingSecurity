@@ -63,6 +63,8 @@ export default function EntryInfo({
     };
 
     getAddress();
+
+    
   }, [event.location]);
   
     return (
