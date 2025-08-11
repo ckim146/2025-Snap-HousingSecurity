@@ -201,6 +201,8 @@ const [selectedToggle, setSelectedToggle] = useState("All");
       <Text style={styles.noteInfo}>2–3pm • Online</Text>
     </View> */}
 <SwipableStack />
+<SwipableStack />
+<SwipableStack />
      {/* <View style={styles.stickyNote}>
     <Text style={styles.noteTitle}>Job Fairs</Text>
     <Text style={styles.noteDate}>Fri, 8/18</Text>
