@@ -354,10 +354,6 @@ export default function HomeBaseScreen({ route, navigation }) {
   check for resets 
   
   figure out workflow situation 
-  
-
-
-
   */}
               {/* search circle goes first */}
               <Pressable
@@ -366,7 +362,7 @@ export default function HomeBaseScreen({ route, navigation }) {
               >
                 <IonIcon name="search" size={20} color="#5b432f" />
               </Pressable>
-              {["ALL", "EVENTS", "TIPS", "HELP REQUESTS", "ANNOUNCEMENTS"].map(
+              {[ "Help with bills", "Transportation", "HELP REQUESTS", "ANNOUNCEMENTS"].map(
                 (tab, i) => (
                   <Pressable
                     key={i}
@@ -737,8 +733,8 @@ const styles = StyleSheet.create({
   // how big are the cards?
   corkBoardCard: {
     backgroundColor: "#B28255",
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: 16, // horizontal padding for the cork board
+    paddingTop: 20,
     paddingBottom: 60,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
@@ -810,9 +806,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
      rowGap: 20,              // or use marginBottom on slotWrap if rowGap isn't supported
-  paddingHorizontal: 10,
+  // paddingHorizontal: 10,
   paddingTop: 26,
-  columnGap: 13,
+  columnGap: 12,
+    rowGap: 20,
+
   },
 
   stickyNote: {
@@ -830,14 +828,18 @@ const styles = StyleSheet.create({
   },
 
   stickyNoteCard: {
-    height: 180,            // ← hard-coded height (try 180–200)
-  borderRadius: 10,
+  height: 175,            // ← hard-coded height (try 180–200)
+  borderRadius: 16,
+  // width: 164,
   padding: 16,
   shadowColor: "#000",
   shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.12,
+  shadowOpacity: 0.12, 
   shadowRadius: 6,
-  elevation: 4,
+  elevation: 4, 
+    // marginHorizontal: 0.5,
+    // marginLeft:0,
+   marginRight: 1,
   },
   pin: {
     position: "absolute",
@@ -902,6 +904,13 @@ const styles = StyleSheet.create({
     flexShrink: 0, // <- prevents stretching
     flexGrow: 0,
   },
+//   cardContainer: {
+//   flexDirection: "row",
+//   flexWrap: "wrap",
+//   justifyContent: "space-between", // pushes first and last card to edges
+//   paddingHorizontal: 12, // remove side padding if it’s pushing them in
+// },
+
   h1: { color: "#fff", fontSize: 28, fontWeight: "800" },
   subtitle: { color: "#fff", opacity: 0.9, marginTop: 6, textAlign: "center" },
   avatarBtn: { height: 40, width: 40, borderRadius: 20, overflow: "hidden" },
@@ -1050,14 +1059,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  slotWrap: { width: "48%",           // <-- was "47%": makes the card skinny
+  slotWrap: { width: "47.9%",           // <-- was "47%": makes the card skinny
   marginBottom: 18,},
 slotLabel: {
   color: "#fff",
-  fontSize: 18,
+  fontSize: 16,
   fontWeight: "800",
   textAlign: "center",
-  marginBottom: 8,
+  marginBottom: 17,
   // optional pop:
   textShadowColor: "rgba(0,0,0,0.25)",
   textShadowOffset: { width: 0, height: 1 },
