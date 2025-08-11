@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React, { use, useEffect, useCallback } from "react";
 import { useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
@@ -11,7 +11,7 @@ import {
   Button,
   TouchableOpacity,
 } from "react-native";
-import { ScrollView } from "react-native-gesture-handler";
+import { Pressable, ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
 import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
@@ -23,6 +23,8 @@ import { useAuthentication } from "../utils/hooks/useAuthentication";
 import Swiper from "react-native-deck-swiper";
 import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import EntryInfo from "../components/EntryInfo";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -53,6 +55,8 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
       date: "Mon, 8/18",
       time: "3-4pm",
       type: "ETC",
+      description: "Learn to create a standout resume in Figma, highlight your skills, and format for clarity. Hosted by Jordan Lee, Career Coach at Youth Forward, who will share insider tips and answer your questions.",
+      location: {"latitude": 37.7689, "longitude": -122.4149}
     },
     {
       id: 2,
@@ -87,10 +91,31 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     Tips: "rgb(255, 226, 186)",
     Social: "rgb(235, 215, 254)",
   };
-  function toggleComponent() {
-    setVisible(!visible);
-    console.log(visible);
+  function toggleEntryInfoVisible() {
+    setDetailsVisible(true);
+    console.log(detailsVisible);
   }
+
+  //Card tap handler
+  const handleTap = useCallback(() => {
+    console.log("Card tapped");
+    toggleEntryInfoVisible();
+  }, []);
+
+  // Tap gesture — only fires when there's no drag movement
+  const tapGesture = Gesture.Tap()
+    // .maxDuration(250)
+    // .maxDeltaX(5) // ignore if moved horizontally
+    // .maxDeltaY(5) // ignore if moved vertically
+    .onEnd((_, success) => {
+      if (success) {
+        handleTap();
+      }
+    });
+
+const panGesture = Gesture.Pan();
+
+const combinedGesture = Gesture.Simultaneous(tapGesture, panGesture);
 
   function handleCardTouch(event) {
     setDetailsVisible(true);
@@ -299,157 +324,159 @@ to prevent duplicate entries, so this will only work if the user has not already
         <Swiper
           cards={orgCardData}
           renderCard={(card) => (
-            <View
-              style={[
-                styles.card,
-                { backgroundColor: colorCategoryMap[card.type] },
-              ]}
-            >
-              {/*The horizontal view containing category and card # */}
+            
               <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
+                style={[
+                  styles.card,
+                  { backgroundColor: colorCategoryMap[card.type] },
+                ]}
               >
-                <View
-                  style={[
-                    styles.categoryTag,
-                    {
-                      backgroundColor: Color(colorCategoryMap[card.type])
-                        .lighten(0.1)
-                        .rgb()
-                        .string(),
-                      alignSelf: "flex-start",
-                      borderColor: Color(colorCategoryMap[card.type])
-                        .darken(0.7)
-                        .rgb()
-                        .string(),
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{
-                      alignSelf: "center",
-                      color: Color(colorCategoryMap[card.type])
-                        .darken(0.7)
-                        .rgb()
-                        .string(),
-                      fontSize: 10,
-                    }}
-                  >
-                    {card.type}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.7)
-                      .rgb()
-                      .string(),
-                  }}
-                >
-                  {cardIndex + 1}/{orgCardData.length}
-                </Text>
-              </View>
-
-              {card.type == "Tips" ? (
+                {/*The horizontal view containing category and card # */}
                 <View
                   style={{
                     flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                    marginTop: 10,
+                    justifyContent: "space-between",
                   }}
                 >
-                  <Image
-                    source={card.profilePic}
-                    style={{
-                      resizeMode: "cover",
-                      height: 50,
-                      width: 50,
-                      marginRight: 10,
-                    }}
-                  />
-                  <View style={{ flexDirection: "column" }}>
-                    <Text style={[styles.title, { marginBottom: 0 }]}>
-                      {card.user}
-                    </Text>
-                    <Text
-                      style={{
-                        color: Color(colorCategoryMap[card.type])
-                          .darken(0.5)
+                  <View
+                    style={[
+                      styles.categoryTag,
+                      {
+                        backgroundColor: Color(colorCategoryMap[card.type])
+                          .lighten(0.1)
                           .rgb()
                           .string(),
+                        alignSelf: "flex-start",
+                        borderColor: Color(colorCategoryMap[card.type])
+                          .darken(0.7)
+                          .rgb()
+                          .string(),
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        alignSelf: "center",
+                        color: Color(colorCategoryMap[card.type])
+                          .darken(0.7)
+                          .rgb()
+                          .string(),
+                        fontSize: 10,
                       }}
                     >
-                      Verified Member
+                      {card.type}
                     </Text>
                   </View>
-                </View>
-              ) : null}
-
-              <Text
-                style={{
-                  fontWeight: "700",
-                  fontSize: 22,
-                  color: "#4b3b1f",
-                  marginBottom: 12,
-                }}
-                numberOfLines={5}
-                ellipsizeMode="tail"
-                adjustsFontSizeToFit
-                minimumFontScale={0.5}
-              >
-                {card.title}
-              </Text>
-              <View style={{ flexDirection: "column" }}>
-                <Text
-                  style={[
-                    styles.title,
-                    {
-                      marginBottom: 0,
-                      marginTop: 0,
+                  <Text
+                    style={{
+                      fontSize: 14,
                       color: Color(colorCategoryMap[card.type])
                         .darken(0.7)
                         .rgb()
                         .string(),
-                    },
-                  ]}
-                >
-                  {card.date}
-                </Text>
+                    }}
+                  >
+                    {cardIndex + 1}/{orgCardData.length}
+                  </Text>
+                </View>
+
+                {card.type == "Tips" ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 10,
+                      marginTop: 10,
+                    }}
+                  >
+                    <Image
+                      source={card.profilePic}
+                      style={{
+                        resizeMode: "cover",
+                        height: 50,
+                        width: 50,
+                        marginRight: 10,
+                      }}
+                    />
+                    <View style={{ flexDirection: "column" }}>
+                      <Text style={[styles.title, { marginBottom: 0 }]}>
+                        {card.user}
+                      </Text>
+                      <Text
+                        style={{
+                          color: Color(colorCategoryMap[card.type])
+                            .darken(0.5)
+                            .rgb()
+                            .string(),
+                        }}
+                      >
+                        Verified Member
+                      </Text>
+                    </View>
+                  </View>
+                ) : null}
+                <Pressable onPress={() => handleCardTouch(card)}>
                 <Text
                   style={{
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.7)
-                      .rgb()
-                      .string(),
+                    fontSize: 22,
+                    color: "#4b3b1f",
+                    marginBottom: 12,
                   }}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
-                  {card.time}
+                  {card.title}
                 </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
+                </Pressable>
+                <View style={{ flexDirection: "column" }}>
+                  <Text
+                    style={[
+                      styles.title,
+                      {
+                        marginBottom: 0,
+                        marginTop: 0,
+                        color: Color(colorCategoryMap[card.type])
+                          .darken(0.7)
+                          .rgb()
+                          .string(),
+                      },
+                    ]}
+                  >
+                    {card.date}
+                  </Text>
+                  <Text
+                    style={{
+                      color: Color(colorCategoryMap[card.type])
+                        .darken(0.7)
+                        .rgb()
+                        .string(),
+                    }}
+                  >
+                    {card.time}
+                  </Text>
+                </View>
+                <View
                   style={{
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.5)
-                      .rgb()
-                      .string(),
+                    flexDirection: "row",
+                    justifyContent: "space-between",
                   }}
                 >
-                  {card.age} ago
-                </Text>
-                <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
+                  <Text
+                    style={{
+                      color: Color(colorCategoryMap[card.type])
+                        .darken(0.5)
+                        .rgb()
+                        .string(),
+                    }}
+                  >
+                    {card.age} ago
+                  </Text>
+                  <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
+                </View>
               </View>
-            </View>
+            
           )}
           onSwiped={(index) => setCardIndex(index + 1)}
           onSwipedAll={() => setCardIndex(0)}
@@ -557,12 +584,20 @@ to prevent duplicate entries, so this will only work if the user has not already
           refreshEvents();
         }}
       />
-      <EventInfo
+      {detailsVisible && 
+
+      <>
+        <View style={styles.overlay} />
+        <EntryInfo
         isVisible={detailsVisible}
         event={selectedEvent}
+        typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
+        org="Youth Forward"
         onClose={() => setDetailsVisible(false)}
       />
+      </>}
     </View>
+    
   );
 }
 
@@ -733,5 +768,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: "#f5d4a9",
     alignItems: "center",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,  // fills entire screen
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent black
   },
 });
