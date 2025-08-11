@@ -65,6 +65,7 @@ export default function SwipableStack({ route, navigation, cardData }) {
 
   const POPUP_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
   const POPUP_HEIGHT = SCREEN_HEIGHT * 0.5; // 50% of screen height
+  //changed
 
   //Adjust so that it populates with supdabase data. Pass to card component
   const orgCardData = [
