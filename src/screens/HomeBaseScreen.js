@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ImageBackground,
   FlatList,
+  Animated,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
@@ -23,7 +24,6 @@ import Color from "color";
 import pictureofmyorg from "../../assets/pictureofmyorg.png";
 import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
-
 import { useHeaderHeight } from "@react-navigation/elements";
 
 import SwipableStack from "../components/SwipableStack";
@@ -37,6 +37,9 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedToggle, setSelectedToggle] = useState("All");
   const [cardIndex, setCardIndex] = useState(0);
+  const [showExpaned, setShowExpanded] = useState(false);
+  const currOrg = 3;
+
   //to fit image in the main page of homebase
   const { width: heroW, height: heroH } =
     Image.resolveAssetSource(pictureofmyorg);
@@ -122,23 +125,106 @@ export default function HomeBaseScreen({ route, navigation }) {
     },
   ];
 
+  //fetch the types within the currently selected org
+  const fetchDistinctTypes = async () => {
+    const { data, error } = await supabase
+      .from("corkboard_entries")
+      .select("type", { distinct: true }) // select distinct "type" values
+      .eq("org_id", currOrg);
+
+    if (!error && data) {
+      // data will be an array of objects like [{ type: "someType" }, { type: "anotherType" }, ...]
+      const types = data.map((item) => item.type);
+      // Deduplicate manually
+      const distinctTypes = Array.from(new Set(types));
+      setTypes(distinctTypes);
+    } else {
+      console.error("Error fetching distinct types:", error);
+    }
+  };
+
+  //fetch all entries of each type TODO: make a for loop for eaceh item in distinctTypes and set each type as a child a giant JSON 
+  const fetchTypeData = async () => {
+    const { data, error } = await supabase
+      .from("corkboard_entries")
+      .select("*") // select all info
+      .eq("org_id", currOrg)
+      .eq("type", disTin[0]);
+
+    if (!error && data) {
+      // data will be an array of objects like [{ type: "someType" }, { type: "anotherType" }, ...]
+      const typeData = data;
+      // Deduplicate manually
+      const distinctTypes = Array.from(new Set(types));
+      setTypes(distinctTypes);
+    } else {
+      console.error("Error fetching distinct types:", error);
+    }
+  };
+
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (currOrg) {
+      fetchDistinctTypes();
+    }
+  }, []);
+  //Animation values for expanded/stacks transition
+  const stacksOpacity = useRef(new Animated.Value(1)).current;
+  const expandedOpacity = useRef(new Animated.Value(0)).current;
+
+  const fadeToggle = () => {
+    if (showExpaned) {
+      // Fade back to slotWraps
+      Animated.parallel([
+        Animated.timing(stacksOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(expandedOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowExpanded(false);
+      });
+    } else {
+      // Fade to resources
+      Animated.parallel([
+        Animated.timing(stacksOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(expandedOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowExpanded(true);
+      });
+    }
+  };
+
   //Create an address property for each orgCardData based off of the coordinates
   useEffect(() => {
-  async function fetchAllAddresses() {
-    const updatedEvents = await Promise.all(
-      orgCardData.map(async (event) => {
-        if (event.location) {
-          const address = await getAddress(event.location);
-          return { ...event, address };
-        }
-        return event;
-      })
-    );
-    setOrgCardData(updatedEvents);
-  }
-  
-  fetchAllAddresses();
-}, [orgCardData]);
+    async function fetchAllAddresses() {
+      const updatedEvents = await Promise.all(
+        orgCardData.map(async (event) => {
+          if (event.location) {
+            const address = await getAddress(event.location);
+            return { ...event, address };
+          }
+          return event;
+        })
+      );
+      setOrgCardData(updatedEvents);
+    }
+
+    fetchAllAddresses();
+  }, [orgCardData]);
 
   function toggleComponent() {
     setVisible(!visible);
@@ -200,9 +286,11 @@ export default function HomeBaseScreen({ route, navigation }) {
           {timeLine ? <Text style={styles.whenSub}>{timeLine}</Text> : null}
           <View style={styles.noteBottomRow}>
             {postedAgo ? <Text style={styles.agoText}>{postedAgo}</Text> : null}
-            <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
-              <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
-            </View>
+            <Pressable onPress={fadeToggle}>
+              <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
+                <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+              </View>
+            </Pressable>
           </View>
         </View>
       </Pressable>
@@ -458,82 +546,111 @@ export default function HomeBaseScreen({ route, navigation }) {
             </ScrollView>
 
             <View style={styles.stickyNoteGrid}>
-              <FlatList
-                data={orgCardData}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item, index }) => (
-                  <View
-                    style={{
-                      flexDirection: "column",
-                      minHeight: 150,
-                      width: "100%",
-                      marginBottom: 10, // add spacing between cards
-                    }}
-                  >
-                    <ResourceExpand
-                      typeColor={colorCategoryMap[item.type]}
-                      cardData={item}
+              <Animated.View
+                style={{
+                  opacity: expandedOpacity,
+                  position: "absolute",
+                  top: 30,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  paddingTop: 40,
+                }}
+              >
+                <Pressable
+                  style={[
+                    styles.arrowAbs,
+                    styles.arrowRight,
+                    { top: 10, left: 10, position: "absolute", zIndex: 10 },
+                  ]}
+                  onPress={fadeToggle}
+                >
+                  <IonIcon name="arrow-back" size={26} color="black" />
+                </Pressable>
+                <FlatList
+                  data={orgCardData}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({ item, index }) => (
+                    <View
+                      style={{
+                        flexDirection: "column",
+                        minHeight: 150,
+                        width: "100%",
+                        marginBottom: 10, // add spacing between cards
+                      }}
+                    >
+                      <ResourceExpand
+                        typeColor={colorCategoryMap[item.type]}
+                        cardData={item}
+                      />
+                    </View>
+                  )}
+                />
+              </Animated.View>
+              <Animated.View style={{ opacity: stacksOpacity }}>
+                <View style={styles.slotWrapContainer}>
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Resources</Text>
+                    <StickyCard
+                      category="resources"
+                      city="Santa Monica"
+                      title="Free Haircuts"
+                      dateLine="Fri, 8/15"
+                      timeLine="12–4 pm"
+                      postedAgo="13 mins ago"
+                      onPress={() =>
+                        handleCardTouch({ title: "Free Haircuts" })
+                      }
                     />
                   </View>
-                )}
-              />
 
-              {/* <View style={styles.slotWrap}>
-                <Text style={styles.slotLabel}>Resources</Text>
-                <StickyCard
-                  category="resources"
-                  city="Santa Monica"
-                  title="Free Haircuts"
-                  dateLine="Fri, 8/15"
-                  timeLine="12–4 pm"
-                  postedAgo="13 mins ago"
-                  onPress={() => handleCardTouch({ title: "Free Haircuts" })}
-                />
-              </View> */}
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Skills</Text>
+                    <StickyCard
+                      category="skills"
+                      city="Santa Monica"
+                      title="Resume Workshop"
+                      dateLine="Wed, 8/20"
+                      timeLine="12–1 pm"
+                      postedAgo="1 day ago"
+                      onPress={() =>
+                        handleCardTouch({ title: "Resume Workshop" })
+                      }
+                    />
+                  </View>
 
-              {/* <View style={styles.slotWrap}>
-                <Text style={styles.slotLabel}>Skills</Text>
-                <StickyCard
-                  category="skills"
-                  city="Santa Monica"
-                  title="Resume Workshop"
-                  dateLine="Wed, 8/20"
-                  timeLine="12–1 pm"
-                  postedAgo="1 day ago"
-                  onPress={() => handleCardTouch({ title: "Resume Workshop" })}
-                />
-              </View> */}
-              {/* 
-              <View style={styles.slotWrap}>
-                <Text style={styles.slotLabel}>Social</Text>
-                <StickyCard
-                  category="social"
-                  city="Venice"
-                  title="Mural Painting"
-                  dateLine="Tue, 8/19"
-                  timeLine="10–4 pm"
-                  postedAgo="51 mins ago"
-                />
-              </View> */}
-{/* 
-              <View style={styles.slotWrap}>
-                <Text style={styles.slotLabel}>Tips</Text>
-                <StickyCard
-                  category="tips"
-                  city="Member"
-                  title="Emma"
-                  timeLine="New food vouchers at the front desk."
-                  postedAgo="16 mins ago"
-                />
-              </View> */}
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Social</Text>
+                    <StickyCard
+                      category="social"
+                      city="Venice"
+                      title="Mural Painting"
+                      dateLine="Tue, 8/19"
+                      timeLine="10–4 pm"
+                      postedAgo="51 mins ago"
+                    />
+                  </View>
 
-              {/* <View style={styles.stickyNote}>
-                <Text style={styles.noteTitle}>Backpack Giveaway</Text>
-                <Text style={styles.noteDate}>Sat, 8/24</Text>
-                <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
-              </View> */}
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Tips</Text>
+                    <StickyCard
+                      category="tips"
+                      city="Member"
+                      title="Emma"
+                      timeLine="New food vouchers at the front desk."
+                      postedAgo="16 mins ago"
+                    />
+                  </View>
 
-              {/* You can add more sticky notes or map over an array */}
+                  <View style={styles.stickyNote}>
+                    <Text style={styles.noteTitle}>Backpack Giveaway</Text>
+                    <Text style={styles.noteDate}>Sat, 8/24</Text>
+                    <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
+                  </View>
+
+                  {/* You can add more sticky notes or map over an array */}
+                </View>
+              </Animated.View>
             </View>
           </View>
 
@@ -1171,5 +1288,11 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.25)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  slotWrapContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between", // or 'center'
+    // optional: padding/margin to space grid nicely
   },
 });
