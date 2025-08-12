@@ -41,6 +41,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
+  const [currType, setCurrType] = useState(null)
   const currOrg = 3;
   const grouped = {};
 
@@ -54,10 +55,10 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [feedTab, setFeedTab] = useState("My Orgs");
   //Put into card component later
   const colorCategoryMap = {
-    Skills: "rgb(255, 211, 216)",
-    ETC: "rgb(203, 249, 228)",
+    workshop: "rgba(255, 211, 216, 1)",
+    event: "rgb(203, 249, 228)",
     Tips: "rgb(255, 226, 186)",
-    Social: "rgb(235, 215, 254)",
+    volunteer: "rgb(235, 215, 254)",
   };
   // palette per category
   const NOTE_COLORS = {
@@ -177,7 +178,8 @@ export default function HomeBaseScreen({ route, navigation }) {
   const stacksOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
-  const fadeToggle = () => {
+  const fadeToggle = (type) => {
+    setCurrType(type);
     if (showExpaned) {
       // Fade back to slotWraps
       Animated.parallel([
@@ -574,7 +576,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                   <IonIcon name="arrow-back" size={26} color="black" />
                 </Pressable>
                 <FlatList
-                  data={orgCardData}
+                  data={entriesByCat[currType]}
                   keyExtractor={(item, index) => index.toString()}
                   renderItem={({ item, index }) => (
                     <View
@@ -586,7 +588,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                       }}
                     >
                       <ResourceExpand
-                        typeColor={colorCategoryMap[item.type]}
+                        typeColor={colorCategoryMap[currType]}
                         cardData={item}
                       />
                     </View>
@@ -601,7 +603,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                     <View style={styles.slotWrap}>
                      <Text style={styles.slotLabel}>{type}</Text>
                     <View key={type} style={{ marginBottom: 20 }}>
-                      <SwipableStack cardData={items} fadeToggle={fadeToggle} />
+                      <SwipableStack cardData={items} fadeToggle={() => fadeToggle(type)} />
                     </View>
                     </View>
                   ))}

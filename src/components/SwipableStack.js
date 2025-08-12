@@ -1,4 +1,4 @@
-import React, { use, useEffect, useCallback } from "react";
+import React, { use, useEffect, useCallback, useMemo } from "react";
 import { useRef, useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
@@ -20,6 +20,7 @@ import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
 import orgIcon from "../../assets/Illuminati.png";
 import IonIcon from "react-native-vector-icons/Ionicons";
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
@@ -28,6 +29,7 @@ import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
+import * as Location from "expo-location";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const CARD_WIDTH = SCREEN_WIDTH * 0.4; // same proportion as your sticky notes
@@ -61,7 +63,8 @@ export default function SwipableStack({
   const [cardIndex, setCardIndex] = useState(0);
   const [popupX, setPopupX] = useState(null);
   const [popupY, setPopupY] = useState(null);
-
+  const [addresses, setAddresses] = React.useState([]);
+  const swiperRef = useRef(null);
   const onLayout = (event) => {
     const { height } = event.nativeEvent.layout;
     setPopupY((SCREEN_HEIGHT - height) / 2);
@@ -120,7 +123,6 @@ export default function SwipableStack({
   };
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
-    console.log("test");
   }
 
   //Card tap handler
@@ -216,9 +218,76 @@ export default function SwipableStack({
   useEffect(() => {
     fetchData();
   }, []);
+  //Fetch all addresses depending on coordinates
+  useEffect(() => {
+    const fetchAllAddresses = async () => {
+      if (!Array.isArray(cardData)) return;
+
+      // Map each item to a reverse geocode promise or null if invalid
+      const promises = cardData.map((card) => {
+        const coords = card.location;
+
+        if (
+          !coords ||
+          typeof coords.latitude !== "number" ||
+          typeof coords.longitude !== "number"
+        ) {
+          return Promise.resolve(null); // skip invalid
+        }
+
+        return Location.reverseGeocodeAsync({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        })
+          .then((geocode) => {
+            if (geocode.length > 0) {
+              const { street, city, region } = geocode[0];
+
+              return `${city}, ${region}`; // or format however you want
+            }
+            return null;
+          })
+          .catch((err) => {
+            console.error("Reverse geocode failed:", err);
+            return null;
+          });
+      });
+
+      // Wait for all to finish
+      const results = await Promise.all(promises);
+      setAddresses(results); // array of addresses or nulls
+    };
+
+    fetchAllAddresses();
+  }, [cardData]);
+
+  const cardsWithAddresses = useMemo(() => {
+    return cardData.map((card, i) => ({
+      ...card,
+      address: addresses[i] || null,
+    }));
+  }, [cardData, addresses]);
+
+  const resetStack = () => {
+    setCards([...cardsWithAddresses]);
+    setCardIndex(0);
+    // Also reset the swiper internal state by jumping to index 0
+    if (swiperRef.current) {
+      swiperRef.current.jumpToCardIndex(0);
+    }
+  };
 
   return (
     <View style={styles.cardContainer}>
+      {/* Show reset button centered when all cards are swiped */}
+      {cardIndex  >= cardData.length  && (
+        <View style={styles.resetContainer}>
+        <TouchableOpacity onPress={resetStack} style={styles.resetButton}>
+          <Icon name="refresh" size={30} color="#333" />
+        </TouchableOpacity>
+         </View>
+      )}
+      {/** Titled background card */}
       <View
         style={[
           styles.card,
@@ -240,8 +309,9 @@ export default function SwipableStack({
         ]}
       />
       <Swiper
-        cards={cardData}
-        renderCard={(card) => (
+        ref={swiperRef}
+        cards={cardsWithAddresses}
+        renderCard={(card, index) => (
           <View
             style={[
               styles.card,
@@ -259,20 +329,21 @@ export default function SwipableStack({
                   justifyContent: "space-between",
                 }}
               >
-                <View
-                >
-                  <Text
-                    style={{
-                      alignSelf: "center",
-                      color: Color(colorCategoryMap[card.type])
-                        .darken(0.7)
-                        .rgb()
-                        .string(),
-                      fontSize: 10,
-                    }}
-                  >
-                    {card.type}
-                  </Text>
+                <View>
+                  {typeof card.address === "string" && (
+                    <Text
+                      style={{
+                        alignSelf: "center",
+                        color: Color(colorCategoryMap[card.type])
+                          .darken(0.7)
+                          .rgb()
+                          .string(),
+                        fontSize: 10,
+                      }}
+                    >
+                      {card.address}
+                    </Text>
+                  )}
                 </View>
                 <Text
                   style={{
@@ -283,7 +354,7 @@ export default function SwipableStack({
                       .string(),
                   }}
                 >
-                  {cardIndex + 1}/{orgCardData.length}
+                  {cardIndex + 1}/{cardData.length}
                 </Text>
               </View>
 
@@ -306,7 +377,7 @@ export default function SwipableStack({
                     }}
                   />
                   <View style={{ flexDirection: "column" }}>
-                    <Text style={[styles.title, { marginBottom: 0 }]} >
+                    <Text style={[styles.title, { marginBottom: 0 }]}>
                       {card.user}
                     </Text>
                     <Text
@@ -382,7 +453,15 @@ export default function SwipableStack({
                 </Text>
                 <Pressable onPress={fadeToggle}>
                   <View
-                    style={[styles.arrowBtn, { backgroundColor:  Color(colorCategoryMap[orgCardData[cardIndex].type]).lighten(0.5).rgb().string()}]}
+                    style={[
+                      styles.arrowBtn,
+                      {
+                        backgroundColor: Color(colorCategoryMap[card.type])
+                          .lighten(0.5)
+                          .rgb()
+                          .string(),
+                      },
+                    ]}
                   >
                     <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
                   </View>
@@ -391,9 +470,11 @@ export default function SwipableStack({
             </View>
           </View>
         )}
-        onSwiped={(index) => setCardIndex(index + 1)}
-        onSwipedAll={() => setCardIndex(0)}
-        cardIndex={0}
+        onSwiped={(index) => {
+          setCardIndex((prev) => prev + 1);
+        }}
+        // onSwipedAll={() => setCardIndex(0)}
+        cardIndex={cardIndex} 
         cardVerticalMargin={0}
         backgroundColor="transparent"
         stackSize={3}
@@ -514,11 +595,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5d4a9",
     alignItems: "center",
   },
-    arrowBtn: {
+  arrowBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
+    alignSelf: "flex-end",
   },
+resetContainer: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: CARD_WIDTH,
+  height: CARD_HEIGHT,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "transparent",
+  zIndex: 10,
+},
+resetButton: {
+  padding: 10,
+  borderRadius: 20,
+  backgroundColor: 'rgba(0,0,0,0.1)',
+  zIndex: 10
+},
 });
