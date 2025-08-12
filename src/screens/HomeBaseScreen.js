@@ -38,7 +38,10 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [selectedToggle, setSelectedToggle] = useState("All");
   const [cardIndex, setCardIndex] = useState(0);
   const [showExpaned, setShowExpanded] = useState(false);
+  const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
+  const [types, setTypes] = useState([]);
   const currOrg = 3;
+  const grouped = {};
 
   //to fit image in the main page of homebase
   const { width: heroW, height: heroH } =
@@ -84,7 +87,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   };
 
   //Adjust so that it populates with supdabase data. Pass to card component
-  const orgCardData = [
+  const orgCardDataRaw = [
     {
       id: 1,
       title: "Free Haircuts",
@@ -125,47 +128,46 @@ export default function HomeBaseScreen({ route, navigation }) {
     },
   ];
 
-  //fetch the types within the currently selected org
-  const fetchDistinctTypes = async () => {
+  //fetch the entries for the currently selected org
+  const fetchOrgEntries = async () => {
+    // Get all entries first
     const { data, error } = await supabase
       .from("corkboard_entries")
-      .select("type", { distinct: true }) // select distinct "type" values
+      .select("*")
       .eq("org_id", currOrg);
 
-    if (!error && data) {
-      // data will be an array of objects like [{ type: "someType" }, { type: "anotherType" }, ...]
-      const types = data.map((item) => item.type);
-      // Deduplicate manually
-      const distinctTypes = Array.from(new Set(types));
-      setTypes(distinctTypes);
-    } else {
-      console.error("Error fetching distinct types:", error);
+    if (error) {
+      console.error("Error fetching entries:", error);
+      return;
     }
-  };
+    setOrgCardData(data);
 
-  //fetch all entries of each type TODO: make a for loop for eaceh item in distinctTypes and set each type as a child a giant JSON 
-  const fetchTypeData = async () => {
-    const { data, error } = await supabase
+    // Get all distinct types
+    const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
-      .select("*") // select all info
-      .eq("org_id", currOrg)
-      .eq("type", disTin[0]);
+      .select("type", { distinct: true })
+      .eq("org_id", currOrg);
 
-    if (!error && data) {
-      // data will be an array of objects like [{ type: "someType" }, { type: "anotherType" }, ...]
-      const typeData = data;
-      // Deduplicate manually
-      const distinctTypes = Array.from(new Set(types));
-      setTypes(distinctTypes);
-    } else {
-      console.error("Error fetching distinct types:", error);
+    if (typeError) {
+      console.error("Error fetching distinct types:", typeError);
+      return;
+    }
+
+    const typeList = [...new Set(typeData.map((item) => item.type))];
+    console.log("typeList", typeList);
+    setTypes(typeList); // store only the array of types
+
+    // Build grouped object using data & typeList directly
+    
+    for (const type of typeList) {
+      grouped[type] = data.filter((item) => item.type === type);
     }
   };
 
   //If the user adds/removes an org or if a different org is selectred, refetch entries
   useEffect(() => {
     if (currOrg) {
-      fetchDistinctTypes();
+      fetchOrgEntries();
     }
   }, []);
   //Animation values for expanded/stacks transition
@@ -546,6 +548,7 @@ export default function HomeBaseScreen({ route, navigation }) {
             </ScrollView>
 
             <View style={styles.stickyNoteGrid}>
+              {/* Big container for all expanded cards */}
               <Animated.View
                 style={{
                   opacity: expandedOpacity,
@@ -588,7 +591,16 @@ export default function HomeBaseScreen({ route, navigation }) {
                 />
               </Animated.View>
               <Animated.View style={{ opacity: stacksOpacity }}>
+                {/** Big container for all swipable cards */}
                 <View style={styles.slotWrapContainer}>
+                  {Object.entries(grouped).map(([type, items]) => (
+                    <div key={type}>
+                      <h3>{type}test</h3>
+                      {items.map((item) => (
+                        <p key={item.id}>{item.title}</p>
+                      ))}
+                    </div>
+                  ))}
                   <View style={styles.slotWrap}>
                     <Text style={styles.slotLabel}>Resources</Text>
                     <StickyCard

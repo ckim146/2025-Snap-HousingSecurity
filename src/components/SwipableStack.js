@@ -141,7 +141,6 @@ export default function SwipableStack({ route, navigation, cardData }) {
 
   function handleCardTouch(event) {
     setDetailsVisible(true);
-    console.log(popupY);
     setSelectedEvent(event);
   }
 
