@@ -24,7 +24,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
-import Swiper from "react-native-deck-swiper";
+import Swiper from "react-native-deck-swiper"; //SWIPING CARDS 
 import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -541,7 +541,7 @@ export default function SwipableStack({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    width: CARD_WIDTH,
+   width: CARD_WIDTH,
     height: CARD_HEIGHT,
     alignItems: "center",
     justifyContent: "space-between",
@@ -562,8 +562,8 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOpacity: 0.10,
+    shadowRadius: 2,
     elevation: 3,
   },
   noteTitle: {
@@ -588,11 +588,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent black
   },
   categoryTag: {
-    borderWidth: 1,
-    borderRadius: 100,
+    // borderWidth: 1,
+    // borderRadius: 100,
     padding: 2,
     paddingHorizontal: 20,
-    backgroundColor: "#f5d4a9",
+    // backgroundColor: "#f5d4a9",
     alignItems: "center",
   },
   arrowBtn: {
