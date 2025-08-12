@@ -40,6 +40,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [showExpaned, setShowExpanded] = useState(false);
   const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
   const [types, setTypes] = useState([]);
+  const [entriesByCat, setEntriesByCat] = useState({});
   const currOrg = 3;
   const grouped = {};
 
@@ -158,10 +159,12 @@ export default function HomeBaseScreen({ route, navigation }) {
     setTypes(typeList); // store only the array of types
 
     // Build grouped object using data & typeList directly
-    
+
     for (const type of typeList) {
       grouped[type] = data.filter((item) => item.type === type);
     }
+
+    setEntriesByCat(grouped);
   };
 
   //If the user adds/removes an org or if a different org is selectred, refetch entries
@@ -592,16 +595,17 @@ export default function HomeBaseScreen({ route, navigation }) {
               </Animated.View>
               <Animated.View style={{ opacity: stacksOpacity }}>
                 {/** Big container for all swipable cards */}
+
                 <View style={styles.slotWrapContainer}>
-                  {Object.entries(grouped).map(([type, items]) => (
-                    <div key={type}>
-                      <h3>{type}test</h3>
-                      {items.map((item) => (
-                        <p key={item.id}>{item.title}</p>
-                      ))}
-                    </div>
+                  {Object.entries(entriesByCat).map(([type, items]) => (
+                    <View style={styles.slotWrap}>
+                     <Text style={styles.slotLabel}>{type}</Text>
+                    <View key={type} style={{ marginBottom: 20 }}>
+                      <SwipableStack cardData={items} fadeToggle={fadeToggle} />
+                    </View>
+                    </View>
                   ))}
-                  <View style={styles.slotWrap}>
+                  {/* <View style={styles.slotWrap}>
                     <Text style={styles.slotLabel}>Resources</Text>
                     <StickyCard
                       category="resources"
@@ -658,7 +662,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                     <Text style={styles.noteTitle}>Backpack Giveaway</Text>
                     <Text style={styles.noteDate}>Sat, 8/24</Text>
                     <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
-                  </View>
+                  </View> */}
 
                   {/* You can add more sticky notes or map over an array */}
                 </View>
@@ -1306,5 +1310,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between", // or 'center'
     // optional: padding/margin to space grid nicely
+    padding: 10,
   },
 });

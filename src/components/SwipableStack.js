@@ -30,10 +30,15 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH * 0.30; // same proportion as your sticky notes
+const CARD_WIDTH = SCREEN_WIDTH * 0.4; // same proportion as your sticky notes
 const CARD_HEIGHT = CARD_WIDTH; // square like your sticky notes
 
-export default function SwipableStack({ route, navigation, cardData }) {
+export default function SwipableStack({
+  route,
+  navigation,
+  cardData,
+  fadeToggle,
+}) {
   const [visible, setVisible] = useState(false);
   const [orgs, setOrgs] = useState([]);
   const [detailsVisible, setDetailsVisible] = useState(false);
@@ -108,10 +113,10 @@ export default function SwipableStack({ route, navigation, cardData }) {
 
   //Put into card component later
   const colorCategoryMap = {
-    Skills: "rgb(255, 211, 216)",
-    ETC: "rgb(203, 249, 228)",
+    workshop: "rgba(255, 211, 216, 1)",
+    event: "rgb(203, 249, 228)",
     Tips: "rgb(255, 226, 186)",
-    Social: "rgb(235, 215, 254)",
+    volunteer: "rgb(235, 215, 254)",
   };
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
@@ -223,10 +228,10 @@ export default function SwipableStack({ route, navigation, cardData }) {
             top: "70%",
             transform: [
               { translateX: 0 },
-              { translateY: -125 }, // half of card height to center vertically
+              { translateY: -123 }, // half of card height to center vertically
               { rotate: "-7deg" },
             ],
-            backgroundColor: Color(colorCategoryMap[orgCardData[0].type])
+            backgroundColor: Color(colorCategoryMap[cardData[0].type])
               .darken(0.2)
               .rgb()
               .string(), // match first card's color
@@ -235,12 +240,15 @@ export default function SwipableStack({ route, navigation, cardData }) {
         ]}
       />
       <Swiper
-        cards={orgCardData}
+        cards={cardData}
         renderCard={(card) => (
           <View
             style={[
               styles.card,
-              { backgroundColor: colorCategoryMap[card.type] },
+              {
+                backgroundColor: colorCategoryMap[card.type],
+                width: CARD_WIDTH,
+              },
             ]}
           >
             <View style={styles.cardContent}>
@@ -252,20 +260,6 @@ export default function SwipableStack({ route, navigation, cardData }) {
                 }}
               >
                 <View
-                  style={[
-                    styles.categoryTag,
-                    {
-                      backgroundColor: Color(colorCategoryMap[card.type])
-                        .lighten(0.1)
-                        .rgb()
-                        .string(),
-                      alignSelf: "flex-start",
-                      borderColor: Color(colorCategoryMap[card.type])
-                        .darken(0.7)
-                        .rgb()
-                        .string(),
-                    },
-                  ]}
                 >
                   <Text
                     style={{
@@ -312,7 +306,7 @@ export default function SwipableStack({ route, navigation, cardData }) {
                     }}
                   />
                   <View style={{ flexDirection: "column" }}>
-                    <Text style={[styles.title, { marginBottom: 0 }]}>
+                    <Text style={[styles.title, { marginBottom: 0 }]} >
                       {card.user}
                     </Text>
                     <Text
@@ -337,7 +331,7 @@ export default function SwipableStack({ route, navigation, cardData }) {
                   }}
                   numberOfLines={2}
                   ellipsizeMode="tail"
-                  adjustsFontSizeToFit
+                  // adjustsFontSizeToFit
                   minimumFontScale={0.8}
                 >
                   {card.title}
@@ -386,7 +380,13 @@ export default function SwipableStack({ route, navigation, cardData }) {
                 >
                   {card.age} ago
                 </Text>
-                <IonIcon name="arrow-redo-outline" size={20}></IonIcon>
+                <Pressable onPress={fadeToggle}>
+                  <View
+                    style={[styles.arrowBtn, { backgroundColor:  Color(colorCategoryMap[orgCardData[cardIndex].type]).lighten(0.5).rgb().string()}]}
+                  >
+                    <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+                  </View>
+                </Pressable>
               </View>
             </View>
           </View>
@@ -447,7 +447,7 @@ export default function SwipableStack({ route, navigation, cardData }) {
             <EntryInfo
               isVisible={detailsVisible}
               event={selectedEvent}
-              typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
+              typeColor={colorCategoryMap[cardData[0].type]}
               org="Youth Forward"
               onClose={() => setDetailsVisible(false)}
             />
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     height: CARD_HEIGHT,
     alignItems: "center",
     justifyContent: "space-between",
-    
+    margin: 5,
   },
   swiperContainer: {
     width: CARD_WIDTH,
@@ -484,7 +484,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
-
   },
   noteTitle: {
     fontSize: 16,
@@ -501,7 +500,7 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     padding: 18,
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   overlay: {
     ...StyleSheet.absoluteFillObject, // fills entire screen
@@ -514,5 +513,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: "#f5d4a9",
     alignItems: "center",
+  },
+    arrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
