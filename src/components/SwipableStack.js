@@ -23,14 +23,14 @@ import IonIcon from "react-native-vector-icons/Ionicons";
 import orgIcon2 from "../../assets/safe_place_for_youth_logo.jpeg";
 import orgIcon3 from "../../assets/smc_logo.png";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
-import Swiper from "react-native-deck-swiper";
+import Swiper from "react-native-deck-swiper"; //SWIPING CARDS 
 import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const CARD_WIDTH = SCREEN_WIDTH * 0.30; // same proportion as your sticky notes
+const CARD_WIDTH = SCREEN_WIDTH * 0.44; // same proportion as your sticky notes
 const CARD_HEIGHT = CARD_WIDTH; // square like your sticky notes
 
 export default function SwipableStack({ route, navigation, cardData }) {
@@ -256,11 +256,11 @@ export default function SwipableStack({ route, navigation, cardData }) {
                   style={[
                     styles.categoryTag,
                     {
-                      backgroundColor: Color(colorCategoryMap[card.type])
-                        .lighten(0.1)
-                        .rgb()
-                        .string(),
-                      alignSelf: "flex-start",
+                      // backgroundColor: Color(colorCategoryMap[card.type])
+                        // .lighten(0.1)
+                        // .rgb()
+                        // .string(),
+                      alignSelf: "flex-end",
                       borderColor: Color(colorCategoryMap[card.type])
                         .darken(0.7)
                         .rgb()
@@ -461,7 +461,7 @@ export default function SwipableStack({ route, navigation, cardData }) {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    width: CARD_WIDTH,
+   width: CARD_WIDTH,
     height: CARD_HEIGHT,
     alignItems: "center",
     justifyContent: "space-between",
@@ -482,8 +482,8 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
+    shadowOpacity: 0.10,
+    shadowRadius: 2,
     elevation: 3,
 
   },
@@ -509,11 +509,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent black
   },
   categoryTag: {
-    borderWidth: 1,
-    borderRadius: 100,
+    // borderWidth: 1,
+    // borderRadius: 100,
     padding: 2,
     paddingHorizontal: 20,
-    backgroundColor: "#f5d4a9",
+    // backgroundColor: "#f5d4a9",
     alignItems: "center",
   },
 });

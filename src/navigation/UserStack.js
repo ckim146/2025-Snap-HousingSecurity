@@ -82,6 +82,7 @@ export default function App() {
     headerTransparent: true,    // remove the white background
     headerTitle: "", // remove the title
     headerTintColor: "#111",
+    title: "My Orgs", presentation: "card",
     // headerStyle: { backgroundColor: "transparent" }, // for @react-navigation/stack
     // headerShadowVisible: false,
       headerStyle: { elevation: 0, shadowOpacity: 0, borderBottomWidth: 0 },
