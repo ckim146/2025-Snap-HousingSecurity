@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
 import {
@@ -11,6 +11,7 @@ import {
   Button,
   TouchableOpacity,
   ImageBackground,
+  FlatList,
 } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import AddEvent from "../components/AddEvent";
@@ -18,7 +19,7 @@ import EventInfo from "../components/EventInfo";
 import { supabase } from "../utils/hooks/supabase";
 import IonIcon from "react-native-vector-icons/Ionicons";
 import { Pressable } from "react-native";
-
+import Color from "color";
 import pictureofmyorg from "../../assets/pictureofmyorg.png";
 import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,7 +27,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useHeaderHeight } from "@react-navigation/elements";
 
 import SwipableStack from "../components/SwipableStack";
-
+import ResourceExpand from "../components/ResourceExpand";
+import cardProfilePic from "../../assets/cardProfilePic.png";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -34,6 +36,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [detailsVisible, setDetailsVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedToggle, setSelectedToggle] = useState("All");
+  const [cardIndex, setCardIndex] = useState(0);
   //to fit image in the main page of homebase
   const { width: heroW, height: heroH } =
     Image.resolveAssetSource(pictureofmyorg);
@@ -42,7 +45,13 @@ export default function HomeBaseScreen({ route, navigation }) {
   const headerHeight = useHeaderHeight();
 
   const [feedTab, setFeedTab] = useState("My Orgs");
-
+  //Put into card component later
+  const colorCategoryMap = {
+    Skills: "rgb(255, 211, 216)",
+    ETC: "rgb(203, 249, 228)",
+    Tips: "rgb(255, 226, 186)",
+    Social: "rgb(235, 215, 254)",
+  };
   // palette per category
   const NOTE_COLORS = {
     resources: {
@@ -70,6 +79,66 @@ export default function HomeBaseScreen({ route, navigation }) {
       arrowBg: "#FFF7E6",
     },
   };
+
+  //Adjust so that it populates with supdabase data. Pass to card component
+  const orgCardData = [
+    {
+      id: 1,
+      title: "Free Haircuts",
+      age: "30 mins",
+      date: "Mon, 8/18",
+      time: "3-4pm",
+      type: "ETC",
+      description:
+        "Learn to create a standout resume in Figma, highlight your skills, and format for clarity. Hosted by Jordan Lee, Career Coach at Youth Forward, who will share insider tips and answer your questions.",
+      location: { latitude: 37.7689, longitude: -122.4149 },
+    },
+    {
+      id: 2,
+      title: "Resume Workshop",
+      age: "1 hour",
+      date: "Wed, 8/20",
+      time: "12-1pm",
+      type: "ETC",
+      location: { latitude: 37.7789, longitude: -122.4149 },
+    },
+    {
+      id: 3,
+      title: "Mural Painting @ Campus",
+      age: "13 mins",
+      date: "Tues, 8/19",
+      time: "10-4pm",
+      type: "ETC",
+      location: { latitude: 37.7689, longitude: -122.4249 },
+    },
+    {
+      id: 4,
+      title: "New book vouchers ready in the office for students",
+      age: "4 mins",
+      type: "ETC",
+      user: "Ben",
+      profilePic: cardProfilePic,
+      location: { latitude: 37.7389, longitude: -122.4149 },
+    },
+  ];
+
+  //Create an address property for each orgCardData based off of the coordinates
+  useEffect(() => {
+  async function fetchAllAddresses() {
+    const updatedEvents = await Promise.all(
+      orgCardData.map(async (event) => {
+        if (event.location) {
+          const address = await getAddress(event.location);
+          return { ...event, address };
+        }
+        return event;
+      })
+    );
+    setOrgCardData(updatedEvents);
+  }
+  
+  fetchAllAddresses();
+}, [orgCardData]);
 
   function toggleComponent() {
     setVisible(!visible);
@@ -120,7 +189,9 @@ export default function HomeBaseScreen({ route, navigation }) {
         <View style={[styles.stickyNoteCard, { backgroundColor: c.paper }]}>
           <View style={styles.pin} />
           {city ? <Text style={styles.cityText}>{city}</Text> : null}
-          <Text style={styles.noteTitleBig} numberOfLines={2} >{title}</Text>
+          <Text style={styles.noteTitleBig} numberOfLines={2}>
+            {title}
+          </Text>
           {dateLine ? (
             <Text style={[styles.whenBold, { color: c.accent }]}>
               {dateLine}
@@ -297,7 +368,6 @@ export default function HomeBaseScreen({ route, navigation }) {
           </ImageBackground>
         </View>
 
-
         {/* overlapping brown sheet header */}
         <View style={styles.sheetHeader}>
           <Text style={styles.sheetTitle}>Safe Place for Youth</Text>
@@ -367,75 +437,95 @@ export default function HomeBaseScreen({ route, navigation }) {
               >
                 <IonIcon name="search" size={20} color="#5b432f" />
               </Pressable>
-              {[ "Help with bills", "Transportation", "HELP REQUESTS", "ANNOUNCEMENTS"].map(
-                (tab, i) => (
-                  <Pressable
-                    key={i}
-                    style={[styles.tab, i === 0 && styles.activeTab]}
+              {[
+                "Help with bills",
+                "Transportation",
+                "HELP REQUESTS",
+                "ANNOUNCEMENTS",
+              ].map((tab, i) => (
+                <Pressable
+                  key={i}
+                  style={[styles.tab, i === 0 && styles.activeTab]}
+                >
+                  <Text
+                    style={[styles.tabText, i === 0 && styles.activeTabText]}
                   >
-                    <Text
-                      style={[styles.tabText, i === 0 && styles.activeTabText]}
-                    >
-                      {tab}
-                    </Text>
-                  </Pressable>
-                )
-              )}
+                    {tab}
+                  </Text>
+                </Pressable>
+              ))}
               <View style={{ width: 8 }} />
             </ScrollView>
 
             <View style={styles.stickyNoteGrid}>
+              <FlatList
+                data={orgCardData}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
+                  <View
+                    style={{
+                      flexDirection: "column",
+                      minHeight: 150,
+                      width: "100%",
+                      marginBottom: 10, // add spacing between cards
+                    }}
+                  >
+                    <ResourceExpand
+                      typeColor={colorCategoryMap[item.type]}
+                      cardData={item}
+                    />
+                  </View>
+                )}
+              />
+
+              {/* <View style={styles.slotWrap}>
+                <Text style={styles.slotLabel}>Resources</Text>
+                <StickyCard
+                  category="resources"
+                  city="Santa Monica"
+                  title="Free Haircuts"
+                  dateLine="Fri, 8/15"
+                  timeLine="12–4 pm"
+                  postedAgo="13 mins ago"
+                  onPress={() => handleCardTouch({ title: "Free Haircuts" })}
+                />
+              </View> */}
+
+              {/* <View style={styles.slotWrap}>
+                <Text style={styles.slotLabel}>Skills</Text>
+                <StickyCard
+                  category="skills"
+                  city="Santa Monica"
+                  title="Resume Workshop"
+                  dateLine="Wed, 8/20"
+                  timeLine="12–1 pm"
+                  postedAgo="1 day ago"
+                  onPress={() => handleCardTouch({ title: "Resume Workshop" })}
+                />
+              </View> */}
+              {/* 
               <View style={styles.slotWrap}>
-    <Text style={styles.slotLabel}>Resources</Text>
-    <StickyCard
-      category="resources"
-      city="Santa Monica"
-      title="Free Haircuts"
-      dateLine="Fri, 8/15"
-      timeLine="12–4 pm"
-      postedAgo="13 mins ago"
-      onPress={() => handleCardTouch({ title: "Free Haircuts" })}
-    />
-
-  </View>
-
-  <View style={styles.slotWrap}>
-    <Text style={styles.slotLabel}>Skills</Text>
-    <StickyCard
-      category="skills"
-      city="Santa Monica"
-      title="Resume Workshop"
-      dateLine="Wed, 8/20"
-      timeLine="12–1 pm"
-      postedAgo="1 day ago"
-      onPress={() => handleCardTouch({ title: "Resume Workshop" })}
-    />
-  </View>
-
-  <View style={styles.slotWrap}>
-    <Text style={styles.slotLabel}>Social</Text>
-    <StickyCard
-      category="social"
-      city="Venice"
-      title="Mural Painting"
-      dateLine="Tue, 8/19"
-      timeLine="10–4 pm"
-      postedAgo="51 mins ago"
-    />
-  </View>
-
-
-  <View style={styles.slotWrap}>
-    <Text style={styles.slotLabel}>Tips</Text>
-    <StickyCard
-      category="tips"
-      city="Member"
-      title="Emma"
-      timeLine="New food vouchers at the front desk."
-      postedAgo="16 mins ago"
-    />
-  </View>
-              
+                <Text style={styles.slotLabel}>Social</Text>
+                <StickyCard
+                  category="social"
+                  city="Venice"
+                  title="Mural Painting"
+                  dateLine="Tue, 8/19"
+                  timeLine="10–4 pm"
+                  postedAgo="51 mins ago"
+                />
+              </View> */}
+{/* 
+              <View style={styles.slotWrap}>
+                <Text style={styles.slotLabel}>Tips</Text>
+                <StickyCard
+                  category="tips"
+                  city="Member"
+                  title="Emma"
+                  timeLine="New food vouchers at the front desk."
+                  postedAgo="16 mins ago"
+                />
+              </View> */}
 
               {/* <View style={styles.stickyNote}>
                 <Text style={styles.noteTitle}>Backpack Giveaway</Text>
@@ -445,7 +535,6 @@ export default function HomeBaseScreen({ route, navigation }) {
 
               {/* You can add more sticky notes or map over an array */}
             </View>
-            
           </View>
 
           {/* MAP CARD */}
@@ -542,6 +631,7 @@ const styles = StyleSheet.create({
   corkBoardContainer: {
     // marginHorizontal: 10,
     marginTop: 0,
+    overflow: "hidden",
     // marginTop: 150, previous one
   },
 
@@ -723,7 +813,7 @@ const styles = StyleSheet.create({
     left: -3,
     right: -0.5,
     bottom: -3,
-  borderRadius: 9,   // <= back sheet
+    borderRadius: 9, // <= back sheet
     transform: [{ rotate: "-6deg" }], // a little tilt, not too curvy
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -814,12 +904,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-     rowGap: 20,              // or use marginBottom on slotWrap if rowGap isn't supported
-  // paddingHorizontal: 10,
-  paddingTop: 26,
-  columnGap: 12,
+    rowGap: 20, // or use marginBottom on slotWrap if rowGap isn't supported
+    // paddingHorizontal: 10,
+    paddingTop: 26,
+    columnGap: 12,
     rowGap: 20,
-
   },
 
   stickyNote: {
@@ -837,18 +926,18 @@ const styles = StyleSheet.create({
   },
 
   stickyNoteCard: {
-  height: 175,            // ← hard-coded height (try 180–200)
-  borderRadius: 16,
-  // width: 164,
-  padding: 16,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.12, 
-  shadowRadius: 6,
-  elevation: 4, 
+    height: 175, // ← hard-coded height (try 180–200)
+    borderRadius: 16,
+    // width: 164,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
     // marginHorizontal: 0.5,
     // marginLeft:0,
-   marginRight: 1,
+    marginRight: 1,
   },
   pin: {
     position: "absolute",
@@ -913,12 +1002,12 @@ const styles = StyleSheet.create({
     flexShrink: 0, // <- prevents stretching
     flexGrow: 0,
   },
-//   cardContainer: {
-//   flexDirection: "row",
-//   flexWrap: "wrap",
-//   justifyContent: "space-between", // pushes first and last card to edges
-//   paddingHorizontal: 12, // remove side padding if it’s pushing them in
-// },
+  //   cardContainer: {
+  //   flexDirection: "row",
+  //   flexWrap: "wrap",
+  //   justifyContent: "space-between", // pushes first and last card to edges
+  //   paddingHorizontal: 12, // remove side padding if it’s pushing them in
+  // },
 
   h1: { color: "#fff", fontSize: 28, fontWeight: "800" },
   subtitle: { color: "#fff", opacity: 0.9, marginTop: 6, textAlign: "center" },
@@ -1068,17 +1157,19 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  slotWrap: { width: "47.9%",           // <-- was "47%": makes the card skinny
-  marginBottom: 18,},
-slotLabel: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "800",
-  textAlign: "center",
-  marginBottom: 17,
-  // optional pop:
-  textShadowColor: "rgba(0,0,0,0.25)",
-  textShadowOffset: { width: 0, height: 1 },
-  textShadowRadius: 2,
-},
+  slotWrap: {
+    width: "47.9%", // <-- was "47%": makes the card skinny
+    marginBottom: 18,
+  },
+  slotLabel: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 17,
+    // optional pop:
+    textShadowColor: "rgba(0,0,0,0.25)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
 });

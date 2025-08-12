@@ -45,6 +45,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   //put into card copmponent
   const [cards, setCards] = useState(orgCardData);
   const [cardIndex, setCardIndex] = useState(0);
+  const darkColor = "#62411b";
 
   //Adjust so that it populates with supdabase data. Pass to card component
   const orgCardData = [
@@ -55,8 +56,9 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
       date: "Mon, 8/18",
       time: "3-4pm",
       type: "ETC",
-      description: "Learn to create a standout resume in Figma, highlight your skills, and format for clarity. Hosted by Jordan Lee, Career Coach at Youth Forward, who will share insider tips and answer your questions.",
-      location: {"latitude": 37.7689, "longitude": -122.4149}
+      description:
+        "Learn to create a standout resume in Figma, highlight your skills, and format for clarity. Hosted by Jordan Lee, Career Coach at Youth Forward, who will share insider tips and answer your questions.",
+      location: { latitude: 37.7689, longitude: -122.4149 },
     },
     {
       id: 2,
@@ -113,9 +115,9 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
       }
     });
 
-const panGesture = Gesture.Pan();
+  const panGesture = Gesture.Pan();
 
-const combinedGesture = Gesture.Simultaneous(tapGesture, panGesture);
+  const combinedGesture = Gesture.Simultaneous(tapGesture, panGesture);
 
   function handleCardTouch(event) {
     setDetailsVisible(true);
@@ -298,7 +300,7 @@ to prevent duplicate entries, so this will only work if the user has not already
           title="Search"
           onPress={() => sortOrgsByRelevance(userInput, orgs)}
           color={"black"}
-          style={{fontSize: 5}}
+          style={{ fontSize: 5 }}
         />
       </View>
 
@@ -396,13 +398,9 @@ to prevent duplicate entries, so this will only work if the user has not already
           ))} */}
         </View>
 
-        <View style={styles.nextButton}>
-          <Button
-            title="Next"
-            onPress={() => navigation.navigate("Homebase")}
-            color={"#f5d4a9"}
-          />
-        </View>
+        <Pressable style={styles.nextButton} onPress={() => navigation.navigate("Homebase")}>
+          <Text style={{fontWeight: "bold", fontSize: 18, color: darkColor}}>Next</Text>
+        </Pressable>
         {/* <View style={styles.nextButton}>
           <Button
             title="Log org entries for first org"
@@ -418,20 +416,19 @@ to prevent duplicate entries, so this will only work if the user has not already
           refreshEvents();
         }}
       />
-      {detailsVisible && 
-
-      <>
-        <View style={styles.overlay} />
-        <EntryInfo
-        isVisible={detailsVisible}
-        event={selectedEvent}
-        typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
-        org="Youth Forward"
-        onClose={() => setDetailsVisible(false)}
-      />
-      </>}
+      {detailsVisible && (
+        <>
+          <View style={styles.overlay} />
+          <EntryInfo
+            isVisible={detailsVisible}
+            event={selectedEvent}
+            typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
+            org="Youth Forward"
+            onClose={() => setDetailsVisible(false)}
+          />
+        </>
+      )}
     </View>
-    
   );
 }
 
@@ -552,10 +549,15 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     borderRadius: 100,
-    backgroundColor: "#7a5728",
+    backgroundColor: "#ffffff",
     width: 120,
     alignSelf: "center",
     padding: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
+    alignItems: "center"
   },
   searchBarContainer: {
     flexDirection: "row",
@@ -602,7 +604,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,  // fills entire screen
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent black
+    ...StyleSheet.absoluteFillObject, // fills entire screen
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent black
   },
 });

@@ -91,7 +91,7 @@ export default function App() {
         <Stack.Screen
           name="HomebaseOnboarding"
           component={HomeBaseOnboardingScreen}
-          options={{ headerShown: true }}
+          options={{ headerShown: false }}
         />
 
         <Stack.Screen
