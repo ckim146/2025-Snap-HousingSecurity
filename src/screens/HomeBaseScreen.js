@@ -395,6 +395,7 @@ export default function HomeBaseScreen({ route, navigation }) {
           </ImageBackground>
         </View>
 
+
         {/* overlapping brown sheet header */}
         <View style={[styles.sheetHeader, { marginTop: -40 }]}>
           <Text style={styles.sheetTitle}>
