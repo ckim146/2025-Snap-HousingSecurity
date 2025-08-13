@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   Pressable,
   ScrollView,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -48,7 +50,7 @@ export default function MapScreen({ navigation }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
-    const colorCategoryMap = {
+  const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
     seminar: "rgba(255, 211, 216, 1)", // same as workshop
     event: "rgb(203, 249, 228)",
@@ -357,6 +359,7 @@ export default function MapScreen({ navigation }) {
     setHomeBaseMode(!homeBaseMode);
     console.log("marker locs", markerLocations);
   };
+  
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -413,16 +416,51 @@ export default function MapScreen({ navigation }) {
             ))}
 
           {/**Info overlay */}
-          {isVisible && selectedEvent && (
-            <View style={styles.overlayContainer}>
+          {/* {isVisible && selectedEvent && (
+            <View style={{ display: 'flex' }}>
               <EntryInfo
-                event={selectedEvent} // Pass marker data to popup
+                event={selectedEvent}
                 isVisible={isVisible}
-                onClose={() => setIsVisible(false)}
+                onClose={() => {setSelectedEvent(null)}}
                 typeColor={colorCategoryMap[selectedEvent.type]}
               />
             </View>
-          )}
+          )} */}
+          {isVisible && (
+                  <Modal
+                    transparent
+                    visible={isVisible}
+                    animationType="fade"
+                    onRequestClose={() => setIsVisible(false)}
+                  >
+                    {/* full-screen overlay that closes popup when tapped */}
+                    {/* <TouchableWithoutFeedback onPress={() => setIsVisible(false)}>
+                      <View style={styles.overlay} />
+                    </TouchableWithoutFeedback> */}
+          
+                    {/* Positioned popup that exactly matches card location/size */}
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Make EntryInfo fill this container */}
+                      <EntryInfo
+                        isVisible={isVisible}
+                        event={selectedEvent}
+                        typeColor={colorCategoryMap[selectedEvent.type]}
+                        // org="Youth Forward"
+                        onClose={() => setIsVisible(false)}
+                      />
+                    </View>
+                  </Modal>
+                )}
         </MapView>
         {homeBaseMode && <View style={styles.overlay} pointerEvents="none" />}
         {/*Button to toggle home base mode*/}

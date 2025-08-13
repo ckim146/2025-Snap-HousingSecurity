@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     borderColor: "yellow",
     width: "80%",
-    position: "absolute",
+    // position: "absolute",
     alignSelf: "center",
     top: "15%",
     borderRadius: 20,
