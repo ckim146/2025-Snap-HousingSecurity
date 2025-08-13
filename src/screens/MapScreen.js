@@ -375,9 +375,8 @@ export default function MapScreen({ navigation }) {
             </Marker>
           )}
           {/* adding markers to the map */}
-          {markerLocations?.map((marker, index) => {
-            if (homeBaseMode)
-            {return (
+          {homeBaseMode && (markerLocations?.map((marker, index) => {
+            return (
               <Marker
                 key={`${marker.id}`}
                 coordinate={{
@@ -390,10 +389,10 @@ export default function MapScreen({ navigation }) {
                   <Ionicons name="location-sharp" size={30} color="#FF5733" />
                 </View>
               </Marker>
-            );}
-          })}
+            );
+          }))}
         </MapView>
-        <View style={styles.overlay} />
+        {homeBaseMode && <View style={styles.overlay} pointerEvents="none"/>}
         {/*Button to toggle home base mode*/}
         {/* <View style={styles.homeBaseToggleButton}>
           <Button
@@ -751,6 +750,6 @@ const styles = StyleSheet.create({
   },
     overlay: {
     ...StyleSheet.absoluteFillObject, // Covers entire map
-    backgroundColor: "rgba(0, 0, 0, 0.3)", // Change RGBA for tint color & opacity
+    backgroundColor: "rgba(255, 37, 37, 0.11)", // Change RGBA for tint color & opacity
   },
 });
