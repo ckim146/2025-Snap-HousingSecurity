@@ -25,6 +25,7 @@ import cardProfilePic from "../../assets/cardProfilePic.png";
 import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
+import welcome_to_homebase_illustration from "../../assets/Welcome_to_homebase_illustration.png";
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -276,138 +277,138 @@ to prevent duplicate entries, so this will only work if the user has not already
   }, []);
 
   return (
-    <View style={styles.EventScreen}>
-      <Text style={styles.mainHeader}>Welcome to</Text>
-      <Text style={[styles.mainHeader, { fontSize: 32, marginTop: 0 }]}>
-        Home Base
-      </Text>
-      <View style={styles.searchBarContainer}>
-        <TextInput
-          style={styles.searchInput}
-          value={userInput}
-          onChangeText={setUserInput}
-          placeholder="Describe your interests or needs"
-        />
-        <IonIcon
-          name="search"
-          size={20}
-          color="#7a5728"
-          style={{ position: "absolute", left: 15 }}
-        />
-      </View>
-      <View style={styles.findButton}>
-        <Button
-          title="Search"
-          onPress={() => sortOrgsByRelevance(userInput, orgs)}
-          color={"black"}
-          style={{ fontSize: 5 }}
-        />
-      </View>
-
-      <ScrollView>
-        <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
-          {/* Mapping of organization cards from orgs state variable. */}
-          {
-            /*!orgState.isSorting*/ true ? (
-              orgState.visibleOrgs.length > 0 ? (
-                orgState.visibleOrgs.map((org, index) => (
-                  <TouchableOpacity
-                    key={org.id}
-                    style={styles.orgContainer}
-                    onPress={() => submitToSupabase(org)}
-                  >
-                    <Image
-                      source={{ uri: org.logo }}
-                      style={{ width: "30%", height: 100, borderRadius: 10 }}
-                    />
-                    <View
-                      style={{
-                        flex: 1,
-                        flexDirection: "column",
-                        justifyContent: "flex-start",
-                        marginLeft: 10,
-                      }}
-                    >
-                      <Text style={styles.title}>{org.name}</Text>
-                      <Text style={styles.subtitle}>{org.description}</Text>
-                    </View>
-                    <View style={styles.plusButtonContainer}>
-                      <IonIcon name="add-outline" size={30} color="black" />
-                    </View>
-                  </TouchableOpacity>
-                ))
-              ) : (
-                <Text>Loading organizations...</Text>
-              )
-            ) : null
-          }
-
-          {/* {orgs.map((event) => ( // Uncomment when organization table is created
-            <TouchableOpacity
-              key={event.id}
-              onPress={() => handleCardTouch(event)}
-              style={styles.container}
+    <ScrollView>
+      <View style={styles.EventScreen}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            paddingHorizontal: 40,
+            alignItems: "center",
+          }}
+        >
+          <Pressable onPress={() => navigation.navigate("Profile")}>
+            <IonIcon name="chevron-back-outline" size={30} />
+          </Pressable>
+          <Pressable>
+            <Text
+              style={[
+                styles.title,
+                {
+                  fontWeight: "regular",
+                  marginVertical: 20,
+                  alignSelf: "flex-end",
+                },
+              ]}
             >
-              <View style={styles.friends}>
-                <Text style={styles.friendsText}>
-                  {event.attending} friends going
-                </Text>
-              </View>
-              <Image
-                style={{
-                  width: "100%",
-                  aspectRatio: 1,
-                  borderRadius: 20,
-                  objectFit: "cover",
-                }}
-                resizeMode="contain"
-                source={{ uri: event.imageURL }}
-              />
-              <Card.Title style={styles.title}>{event.title}</Card.Title>
-              <View style={styles.userInfo}>
-                <Image
-                  style={styles.bitmojiUser}
-                  source={{
-                    uri: "https://sdk.bitmoji.com/render/panel/20048676-103221902646_4-s5-v1.png?transparent=1&palette=1&scale=1",
-                  }}
-                />
-                <Text style={styles.username}>{event.host}</Text>
-              </View>
-            </TouchableOpacity>
-          ))} */}
+              Skip
+            </Text>
+          </Pressable>
         </View>
-
-        <Pressable style={styles.nextButton} onPress={() => navigation.navigate("Homebase")}>
-          <Text style={{fontWeight: "bold", fontSize: 18, color: darkColor}}>Next</Text>
+        <Image
+          source={welcome_to_homebase_illustration}
+          style={styles.titleImage}
+        />
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchInput}
+            value={userInput}
+            onChangeText={setUserInput}
+            placeholder="Describe your interests or needs"
+          />
+          <IonIcon
+            name="search"
+            size={20}
+            color="#7a5728"
+            style={{ position: "absolute", left: 15 }}
+          />
+        </View>
+        <Pressable
+          style={styles.findButton}
+          onPress={() => sortOrgsByRelevance(userInput, orgs)}
+        >
+          <Text style={{ fontWeight: "bold", fontSize: 20 }}>Search</Text>
         </Pressable>
-        {/* <View style={styles.nextButton}>
+
+              <Text style={{ fontWeight: "bold", fontSize: 20, marginLeft: 40 }}>Explore New Boards</Text>
+        <ScrollView>
+          <View style={[styles.Events, { display: true ? "flex" : "none" }]}>
+            {/* Mapping of organization cards from orgs state variable. */}
+            {
+              /*!orgState.isSorting*/ true ? (
+                orgState.visibleOrgs.length > 0 ? (
+                  orgState.visibleOrgs.map((org, index) => (
+                    <TouchableOpacity
+                      key={org.id}
+                      style={styles.orgContainer}
+                      onPress={() => submitToSupabase(org)}
+                    >
+                      <Image
+                        source={{ uri: org.logo }}
+                        style={{ width: 80, height: 80, borderRadius: 10 }}
+                      />
+                      <View
+                        style={{
+                          flex: 1,
+                          flexDirection: "column",
+                          justifyContent: "flex-start",
+                          marginLeft: 10,
+                        }}
+                      >
+                        <Text style={[styles.title, {fontSize: 17}]}>{org.name}</Text>
+                        <Text style={styles.subtitle}>{org.description}</Text>
+                      </View>
+                      <View style={styles.plusButtonContainer}>
+                        <IonIcon name="add-outline" size={30} color="black" />
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text>Loading organizations...</Text>
+                )
+              ) : null
+            }
+          </View>
+
+          <Pressable
+            style={styles.nextButton}
+            onPress={() => navigation.navigate("Homebase")}
+          >
+            <Text
+              style={{ fontWeight: "bold", fontSize: 18, color: darkColor }}
+            >
+              Next
+            </Text>
+          </Pressable>
+          {/* <View style={styles.nextButton}>
           <Button
             title="Log org entries for first org"
             onPress={() => fetchCorkboardEntries()}
           />
         </View> */}
-      </ScrollView>
+        </ScrollView>
 
-      <AddEvent
-        isVisible={visible}
-        onClose={() => {
-          toggleComponent();
-          refreshEvents();
-        }}
-      />
-      {detailsVisible && (
-        <>
-          <View style={styles.overlay} />
-          <EntryInfo
-            isVisible={detailsVisible}
-            event={selectedEvent}
-            typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
-            org="Youth Forward"
-            onClose={() => setDetailsVisible(false)}
-          />
-        </>
-      )}
-    </View>
+        <AddEvent
+          isVisible={visible}
+          onClose={() => {
+            toggleComponent();
+            refreshEvents();
+          }}
+        />
+        {detailsVisible && (
+          <>
+            <View style={styles.overlay} />
+            <EntryInfo
+              isVisible={detailsVisible}
+              event={selectedEvent}
+              typeColor={colorCategoryMap[orgCardData[cardIndex].type]}
+              org="Youth Forward"
+              onClose={() => setDetailsVisible(false)}
+            />
+          </>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
@@ -432,12 +433,6 @@ const styles = StyleSheet.create({
     maxHeight: 250,
     margin: 0,
   },
-  bitmojiUser: {
-    width: 28,
-    aspectRatio: 1,
-    borderRadius: 1000,
-    margin: 0,
-  },
   title: {
     textAlign: "left",
     marginTop: 8,
@@ -450,27 +445,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#575757",
     width: "60%",
-  },
-  userInfo: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    margin: 0,
-  },
-  friends: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 100,
-    backgroundColor: "#fffc00",
-    margin: 0,
-    borderRadius: 20,
-    padding: 10,
-  },
-  friendsText: {
-    fontWeight: "bold",
-    fontSize: 10,
   },
   username: {
     fontSize: 11,
@@ -486,6 +460,7 @@ const styles = StyleSheet.create({
   EventScreen: {
     height: "100%",
     backgroundColor: "#f9f9f9",
+    marginTop: 50,
   },
   orgContainer: {
     width: "90%",
@@ -525,6 +500,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     width: "100%",
     paddingLeft: 45,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 10,
   },
   nextButton: {
     borderRadius: 100,
@@ -536,7 +515,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 10,
-    alignItems: "center"
+    alignItems: "center",
+    marginBottom: 60
   },
   searchBarContainer: {
     flexDirection: "row",
@@ -546,10 +526,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   findButton: {
-    width: 200,
     alignSelf: "flex-end",
-    padding: 5,
     marginTop: 15,
+    marginRight: 50,
   },
   card: {
     height: 200,
@@ -585,5 +564,9 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject, // fills entire screen
     backgroundColor: "rgba(0, 0, 0, 0.5)", // semi-transparent black
+  },
+  titleImage: {
+    width: 400,
+    height: 300,
   },
 });
