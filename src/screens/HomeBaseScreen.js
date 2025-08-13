@@ -523,6 +523,11 @@ const tipsKey =
 
               {/* S.P.Y bubble w/ arrows */}
               {/* <View style={styles.carouselRow}> */}
+
+
+              {isMyOrgs && ( 
+
+                <>
               <View style={styles.spyBubbleWrap}>
                 <Pressable
                   style={[styles.arrowAbs, styles.arrowLeft]}
@@ -626,7 +631,10 @@ const tipsKey =
               >
                 <IonIcon name="search" size={22} color="#111" />
               </Pressable> */}
+              </>
+              )}
             </View>
+            
           </ImageBackground>
         </View>
 
@@ -738,6 +746,7 @@ const tipsKey =
                           <SwipableStack
                             cardData={items}
                             fadeToggle={() => fadeToggle(type)}
+                            colorMap={colorCategoryMap}
                             
                           />
                         </View>

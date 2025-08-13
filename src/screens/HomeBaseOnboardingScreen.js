@@ -26,6 +26,7 @@ import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
 import welcome_to_homebase_illustration from "../../assets/Welcome_to_homebase_illustration.png";
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -229,40 +230,40 @@ Return ONLY a JSON array of the organization names in the sorted order, like:
 
   /*When a organization card is pressed, this function will submit the org assignment to Supabase. Constraint set on Supabase table
 to prevent duplicate entries, so this will only work if the user has not already joined the organization.*/
-  // const submitToSupabase = async (orgData) => {
-  //   let newUserOrgAssignment = {
-  //     user_id: user.id,
-  //     org_id: orgData.id,
-  //   };
-  //   try {
-  //     console.log(
-  //       "Submitting org assignment to Supabase:",
-  //       newUserOrgAssignment
-  //     );
-  //     const { data, error } = await supabase
-  //       .from("org_user_assignments") //
-  //       .insert([newUserOrgAssignment]); // Insert the org assignment data
+  const submitToSupabase = async (orgData) => {
+    let newUserOrgAssignment = {
+      user_id: user.id,
+      org_id: orgData.id,
+    };
+    try {
+      console.log(
+        "Submitting org assignment to Supabase:",
+        newUserOrgAssignment
+      );
+      const { data, error } = await supabase
+        .from("org_user_assignments") //
+        .insert([newUserOrgAssignment]); // Insert the org assignment data
 
-  //     if (error) {
-  //       console.error("org assignment already exists:", error);
-  //     } else {
-  //       console.log("Data inserted:", data); //Will log "null" even when it is successful. Needs a select query to return the inserted data
-  //     }
-  //   } catch (error) {
-  //     console.error("Unexpected error:", error);
-  //   }
-  //   // Remove clicked org from the queue
-  //   const updatedAll = orgState.sortedOrgs.filter(
-  //     (org) => org.id !== orgData.id
-  //   );
-  //   const newVisible = updatedAll.slice(0, 3);
-  //   // setOrgs(updatedAll);
-  //   setOrgState((prevState) => ({
-  //     ...prevState,
-  //     sortedOrgs: updatedAll,
-  //     visibleOrgs: newVisible,
-  //   }));
-  // };
+      if (error) {
+        console.error("org assignment already exists:", error);
+      } else {
+        console.log("Data inserted:", data); //Will log "null" even when it is successful. Needs a select query to return the inserted data
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    }
+    // Remove clicked org from the queue
+    const updatedAll = orgState.sortedOrgs.filter(
+      (org) => org.id !== orgData.id
+    );
+    const newVisible = updatedAll.slice(0, 3);
+    // setOrgs(updatedAll);
+    setOrgState((prevState) => ({
+      ...prevState,
+      sortedOrgs: updatedAll,
+      visibleOrgs: newVisible,
+    }));
+  };
 
 const toggleFollow = async (org) => {
   if (!user || !user.id) return;

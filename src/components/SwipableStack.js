@@ -116,6 +116,21 @@ export default function SwipableStack({
     },
   ];
 
+    const NOTE_COLORS = {
+  resources: { paper: "#DFF6EE", accent: "#1A9E74", arrowBg: "#F5FFFC" },
+  skills:    { paper: "#FADDE1", accent: "#C44A65", arrowBg: "#FFF1F4" },
+  social:    { paper: "#E5D5FF", accent: "#5C3FBF", arrowBg: "#F6F2FF" },
+  tips:      { paper: "#F6E0B8", accent: "#8B6A2E", arrowBg: "#FFF7E6" },
+};
+
+const typeToNote = (t = "") => {
+  const k = t.toLowerCase();
+  if (k.includes("skill") || k.includes("workshop")) return "skills";
+  if (k.includes("volunteer") || k.includes("social")) return "social";
+  if (k.includes("tip")) return "tips";
+  return "resources";
+};
+
   //Put into card component later
   const colorCategoryMap = colorMap;
   function toggleEntryInfoVisible() {
