@@ -96,7 +96,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   };
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
-    console.log(detailsVisible);
+    // console.log(detailsVisible);
   }
 
   //Card tap handler
@@ -122,7 +122,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
 
   function handleCardTouch(event) {
     setDetailsVisible(true);
-    console.log(detailsVisible);
+    // console.log(detailsVisible);
     setSelectedEvent(event);
   }
 
@@ -287,10 +287,10 @@ to prevent duplicate entries, so this will only work if the user has not already
             alignItems: "center",
           }}
         >
-          <Pressable onPress={() => navigation.navigate("Profile")}>
+          <Pressable onPress={() => navigation.goBack()}>
             <IonIcon name="chevron-back-outline" size={30} />
           </Pressable>
-          <Pressable>
+          <Pressable onPress={()=> navigation.navigate("Homebase")}>
             <Text
               style={[
                 styles.title,

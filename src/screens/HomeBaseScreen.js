@@ -676,66 +676,16 @@ export default function HomeBaseScreen({ route, navigation }) {
                     </View>
                     </View>
                   ))}
-                  {/* <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Resources</Text>
-                    <StickyCard
-                      category="resources"
-                      city="Santa Monica"
-                      title="Free Haircuts"
-                      dateLine="Fri, 8/15"
-                      timeLine="12–4 pm"
-                      postedAgo="13 mins ago"
-                      onPress={() =>
-                        handleCardTouch({ title: "Free Haircuts" })
-                      }
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Skills</Text>
-                    <StickyCard
-                      category="skills"
-                      city="Santa Monica"
-                      title="Resume Workshop"
-                      dateLine="Wed, 8/20"
-                      timeLine="12–1 pm"
-                      postedAgo="1 day ago"
-                      onPress={() =>
-                        handleCardTouch({ title: "Resume Workshop" })
-                      }
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Social</Text>
-                    <StickyCard
-                      category="social"
-                      city="Venice"
-                      title="Mural Painting"
-                      dateLine="Tue, 8/19"
-                      timeLine="10–4 pm"
-                      postedAgo="51 mins ago"
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Tips</Text>
-                    <StickyCard
+                {/* <StickyCard
+                      variant="post"
                       category="tips"
-                      city="Member"
-                      title="Emma"
-                      timeLine="New food vouchers at the front desk."
-                      postedAgo="16 mins ago"
-                    />
-                  </View>
-
-                  <View style={styles.stickyNote}>
-                    <Text style={styles.noteTitle}>Backpack Giveaway</Text>
-                    <Text style={styles.noteDate}>Sat, 8/24</Text>
-                    <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
-                  </View> */}
-
-                  {/* You can add more sticky notes or map over an array */}
+                      org="Andrew"
+                      avatarUri={andrewpic}
+                      title="Shelters full at St Josephs. OPCC has a few left."
+                      postedAgo="1 hr ago"
+                      tag="TIPS"
+                      views={31}
+                    /> */}
                 </View>
               </Animated.View>
             </View>
@@ -914,91 +864,23 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: "#fff",
   },
-  textColumn: {
-    flexDirection: "column", // stack vertically
-    gap: 4, // spacing between title + subtitle
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
 
-  bitmojiUser: {
-    width: 28,
-    aspectRatio: 1,
-    borderRadius: 1000,
-    margin: 0,
-  },
   title: {
     textAlign: "left",
     marginTop: 8,
     marginBottom: 5,
     fontSize: 15,
   },
-  userInfo: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    margin: 0,
-  },
-  friends: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 100,
-    backgroundColor: "#fffc00",
-    margin: 0,
-    borderRadius: 20,
-    padding: 10,
-  },
-  friendsText: {
-    fontWeight: "bold",
-    fontSize: 10,
-  },
-  username: {
-    fontSize: 11,
-    margin: 0,
-    fontWeight: "bold",
-    color: "#575757",
-  },
+
   // addButton: {
   //   position: "absolute",
   //   bottom: 16,
   //   right: 20,
   // },
-  EventScreen: {
-    height: "100%",
-  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  mainHeader: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginLeft: 40,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  bottomHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingTop: 12,
-  },
-
-  topBannerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 30,
-    paddingTop: 40,
   },
 
   spyLogoContainer: { alignItems: "center", justifyContent: "center" },
