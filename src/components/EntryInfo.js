@@ -29,10 +29,6 @@ export default function EntryInfo({
   const [address, setAddress] = useState(null);
   const [location, setLocation] = useState("");
   const navigation = useNavigation();
-  //changed
-
-  let bitmoji =
-    "https://img.wattpad.com/90a1809a942195f501ba5cafbf80161dd03ff822/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f38465370565a4e5263515a5278413d3d2d3530303538323139312e313466623164613439653163393466323134333730363231343331372e6a7067?s=fit&w=720&h=720";
 
   useEffect(() => {
     if (event.location) {

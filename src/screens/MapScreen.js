@@ -48,6 +48,19 @@ export default function MapScreen({ navigation }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
+    const colorCategoryMap = {
+    workshop: "rgba(255, 211, 216, 1)",
+    seminar: "rgba(255, 211, 216, 1)", // same as workshop
+    event: "rgb(203, 249, 228)",
+    festival: "rgb(203, 249, 228)", // same as event
+    Tips: "rgb(255, 226, 186)",
+    activity: "rgb(255, 226, 186)",
+    volunteer: "rgb(235, 215, 254)",
+    info: "rgb(235, 215, 254)",
+    support: "rgba(115, 118, 255, 1)",
+    social: "rgba(213, 255, 63, 1)",
+  };
+
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
 
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,geometry&key=${PLACES_API_KEY}`;
@@ -384,33 +397,32 @@ export default function MapScreen({ navigation }) {
           )}
           {/* adding markers to the map */}
           {homeBaseMode &&
-            markerLocations?.map((marker, index) => {
-              return (
-                <Marker
-                  key={`${marker.id}`}
-                  coordinate={{
-                    latitude: marker.latitude,
-                    longitude: marker.longitude,
-                  }}
-                  onPress={() => handleMarkerPress(marker)}
-                >
-                  <View style={styles.iconWrapper}>
-                    <Ionicons name="location-sharp" size={30} color="#FF5733" />
-                  </View>
-                </Marker>
-              );
-            })}
+            entries?.map((entry) => (
+              <Marker
+                key={entry.id}
+                coordinate={{
+                  latitude: entry.location.latitude,
+                  longitude: entry.location.longitude,
+                }}
+                onPress={() => handleMarkerPress(entry)} // Pass full entry
+              >
+                <View style={styles.iconWrapper}>
+                  <Ionicons name="location-sharp" size={30} color="#FF5733" />
+                </View>
+              </Marker>
+            ))}
 
           {/**Info overlay */}
-          {/* {isVisible && selectedEvent && (
+          {isVisible && selectedEvent && (
             <View style={styles.overlayContainer}>
               <EntryInfo
                 event={selectedEvent} // Pass marker data to popup
                 isVisible={isVisible}
                 onClose={() => setIsVisible(false)}
+                typeColor={colorCategoryMap[selectedEvent.type]}
               />
             </View>
-          )} */}
+          )}
         </MapView>
         {homeBaseMode && <View style={styles.overlay} pointerEvents="none" />}
         {/*Button to toggle home base mode*/}
