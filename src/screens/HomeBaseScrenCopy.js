@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { useState } from "react";
+import React, { useEffect } from "react";
+import { useRef, useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
 import {
@@ -24,22 +24,11 @@ import Color from "color";
 import pictureofmyorg from "../../assets/pictureofmyorg.png";
 import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
+import { useHeaderHeight } from "@react-navigation/elements";
+
+import SwipableStack from "../components/SwipableStack";
 import ResourceExpand from "../components/ResourceExpand";
 import cardProfilePic from "../../assets/cardProfilePic.png";
-
-//IMPORTING BITMOJI AVATAR PICTURES
-import lesliepic from "../../assets/lesliebitmoji.png";
-import alexpic from "../../assets/alexbitmoji.png";
-import amberpic from "../../assets/amberbitmoji.png";
-import andrewpic from "../../assets/andrewbitmoji.png";
-import emmapic from "../../assets/emmabitmoji.png";
-import joepic from "../../assets/joebitmoji.png";
-
-//SWIPEABLE STACK COMPONENT
-import SwipableStack from "../components/SwipableStack";
-import EntryInfo from "../components/EntryInfo";
-
-import { useHeaderHeight } from "@react-navigation/elements";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -57,19 +46,13 @@ export default function HomeBaseScreen({ route, navigation }) {
   const grouped = {};
 
   //to fit image in the main page of homebase
-  // const { width: heroW, height: heroH } =
-  //   Image.resolveAssetSource(pictureofmyorg);
-  // const HERO_RATIO = heroW / heroH;
-  const [feedTab, setFeedTab] = useState("My Orgs");
-
-  const isMyOrgs = feedTab === "My Orgs";
-  const isAllPosts = feedTab === "All Posts";
-  const heroSource = isMyOrgs ? pictureofmyorg : pictureofallposts;
-  const { width: hw, height: hh } = Image.resolveAssetSource(heroSource);
-  const HERO_RATIO = hw / hh;
+  const { width: heroW, height: heroH } =
+    Image.resolveAssetSource(pictureofmyorg);
+  const HERO_RATIO = heroW / heroH;
   //header is inside
   const headerHeight = useHeaderHeight();
 
+  const [feedTab, setFeedTab] = useState("My Orgs");
   //Put into card component later
   const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
@@ -149,7 +132,6 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   //fetch the entries for the currently selected org
   const fetchOrgEntries = async () => {
-    
     // Get all entries first
     const { data, error } = await supabase
       .from("corkboard_entries")
@@ -160,47 +142,42 @@ export default function HomeBaseScreen({ route, navigation }) {
       console.error("Error fetching entries:", error);
       return;
     }
-    
     setOrgCardData(data);
-    
-    
+
     // Get all distinct types
     const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
       .select("type", { distinct: true })
       .eq("org_id", currOrg);
-    
+
     if (typeError) {
       console.error("Error fetching distinct types:", typeError);
       return;
     }
-    
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
-    
+    console.log("typeList", typeList);
     setTypes(typeList); // store only the array of types
 
     // Build grouped object using data & typeList directly
-    const grouped = {};
+
     for (const type of typeList) {
       grouped[type] = data.filter((item) => item.type === type);
     }
+
     setEntriesByCat(grouped);
   };
 
-    //If the user adds/removes an org or if a different org is selectred, refetch entries
-    useEffect(() => {
-      if (currOrg) {
-        fetchOrgEntries();
-      }
-    }, []);
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (currOrg) {
+      fetchOrgEntries();
+    }
+  }, []);
+  //Animation values for expanded/stacks transition
+  const stacksOpacity = useRef(new Animated.Value(1)).current;
+  const expandedOpacity = useRef(new Animated.Value(0)).current;
 
-    
-
-    //Animation values for expanded/stacks transition
-    const stacksOpacity = useRef(new Animated.Value(1)).current;
-    const expandedOpacity = useRef(new Animated.Value(0)).current;
-  
   const fadeToggle = (type) => {
     setCurrType(type);
     if (showExpaned) {
@@ -286,123 +263,42 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
-    
   }, []);
   // contentContainerStyle={{ paddingTop: headerHeight + 8  }}
 
-  const onSelectFeed = (tab) => {
-    if (tab === "My Orgs") {
-      setFeedTab("My Orgs");
-      navigation.navigate("CorkBoardScreen"); // <- go to corkboard
-    } else {
-      setFeedTab("All Posts"); // stay on this screen
-    }
-  };
-
   function StickyCard({
     category = "resources",
-    org,
+    city,
     title,
     dateLine,
     timeLine,
     postedAgo,
     onPress,
-    variant = "note",
-    showBack = false,
-    showPin = false,
-    avatarUri,
-    tag,
-    views = 0,
   }) {
     const c = NOTE_COLORS[category] || NOTE_COLORS.resources;
-    const isPost = variant === "post";
-    const imgSource =
-      typeof avatarUri === "string" ? { uri: avatarUri } : avatarUri;
     return (
       <Pressable style={styles.noteWrap} onPress={onPress}>
-        {!isPost && showBack && (
-          <View style={[styles.noteBack, { backgroundColor: c.back }]} />
-        )}
-
-        <View
-          style={[
-            styles.stickyNoteCard,
-            { backgroundColor: c.paper },
-            isPost && styles.postCard, // extra inner bottom space
-          ]}
-        >
-          {!isPost && showPin && <View style={styles.pin} />}
-
-          {/* {!!city && (
-          <Text style={isPost ? styles.postCity : styles.cityText}>{city}</Text>
-        )} */}
-
-          {/* <Text
-          style={isPost ? styles.postTitle : styles.noteTitleBig}
-          numberOfLines={2}
-          ellipsizeMode="tail"
-        >
-          {title}
-        </Text> */}
-
-          {isPost ? (
-            <>
-              {/* header: avatar + org */}
-              <View style={styles.postHeaderRow}>
-                {avatarUri ? (
-                  <Image source={imgSource} style={styles.avatar32} />
-                ) : (
-                  <View style={[styles.avatar32, styles.avatarPlaceholder]} />
-                )}
-                <Text
-                  style={styles.orgName}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                >
-                  {org}
-                </Text>
+        <View style={[styles.noteBack, { backgroundColor: c.back }]} />
+        <View style={[styles.stickyNoteCard, { backgroundColor: c.paper }]}>
+          <View style={styles.pin} />
+          {city ? <Text style={styles.cityText}>{city}</Text> : null}
+          <Text style={styles.noteTitleBig} numberOfLines={2}>
+            {title}
+          </Text>
+          {dateLine ? (
+            <Text style={[styles.whenBold, { color: c.accent }]}>
+              {dateLine}
+            </Text>
+          ) : null}
+          {timeLine ? <Text style={styles.whenSub}>{timeLine}</Text> : null}
+          <View style={styles.noteBottomRow}>
+            {postedAgo ? <Text style={styles.agoText}>{postedAgo}</Text> : null}
+            <Pressable onPress={fadeToggle}>
+              <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
+                <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
               </View>
-
-              {/* body */}
-              <Text style={styles.postBody} numberOfLines={4}>
-                {title}
-              </Text>
-
-              {/* time */}
-              {!!postedAgo && <Text style={styles.postAgo}>{postedAgo}</Text>}
-
-              {/* bottom meta */}
-              <View style={styles.metaRow}>
-                {!!tag && (
-                  <View style={styles.tagPill}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                )}
-                <View style={styles.eyeRow}>
-                  <IonIcon name="eye-outline" size={16} color="#6b5b4b" />
-                  <Text style={styles.eyeCount}>{views}</Text>
-                </View>
-              </View>
-            </>
-          ) : (
-            <>
-              {!!org && <Text style={styles.cityText}>{org}</Text>}
-              <Text style={styles.noteTitleBig}>{title}</Text>
-              {!!dateLine && (
-                <Text style={[styles.whenBold, { color: c.accent }]}>
-                  {dateLine}
-                </Text>
-              )}
-              {!!timeLine && <Text style={styles.whenSub}>{timeLine}</Text>}
-
-              <View style={styles.noteBottomRow}>
-                {!!postedAgo && <Text style={styles.agoText}>{postedAgo}</Text>}
-                <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
-                  <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
-                </View>
-              </View>
-            </>
-          )}
+            </Pressable>
+          </View>
         </View>
       </Pressable>
     );
@@ -414,8 +310,8 @@ export default function HomeBaseScreen({ route, navigation }) {
         {/* HERO */}
         <View style={styles.heroWrap}>
           <ImageBackground
-            source={heroSource}
-            style={[styles.hero, { height: 380 }]} // width 100% + aspectRatio => perfect fit, aspectRatio: HERO_RATIO,
+            source={pictureofmyorg}
+            style={[styles.hero, { aspectRatio: HERO_RATIO }]} // width 100% + aspectRatio => perfect fit
             imageStyle={styles.heroImage} // bottom-only radius (optional)
             resizeMode="cover"
           >
@@ -568,56 +464,93 @@ export default function HomeBaseScreen({ route, navigation }) {
         </View>
 
         {/* overlapping brown sheet header */}
-        <View style={[styles.sheetHeader, { marginTop: -40 }]}>
-          <Text style={styles.sheetTitle}>
-            {isMyOrgs ? "Safe Place for Youth" : "Venice, CA"}
-          </Text>
-          <Text style={styles.sheetSub}>
-            {isMyOrgs
-              ? "Welcome to our resource board!"
-              : "Public resource board for your area."}
-          </Text>
+        <View style={styles.sheetHeader}>
+          <Text style={styles.sheetTitle}>Safe Place for Youth</Text>
+          <Text style={styles.sheetSub}>Welcome to our resource board!</Text>
         </View>
 
         {/* corkboard */}
 
-        {/* Filter Tabs */}
-
         <View style={styles.corkBoardContainer}>
-          {isMyOrgs ? (
-            <View style={styles.corkBoardCard}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterTabs}
+          {/* <View style={styles.corkBoardBanner}>
+            <View style={styles.cardHeader}>
+              <View style={styles.textColumn}>
+                <Text style={styles.bannerTitle}>Cork Board</Text>
+                <Text style={styles.bannerSubtitle}>
+                  Posts and tips from your local orgs
+                </Text>
+              </View> */}
+          {/* <Pressable
+                onPress={() => navigation.navigate("CorkBoardScreen")}
+                style={{ marginLeft: "auto" }}
               >
-                {/* search circle goes first */}
+                <IonIcon
+                  name="chevron-forward-outline"
+                  size={32}
+                  color="white"
+                />
+              </Pressable> */}
+          {/* </View>
+          </View> */}
+          {/* Filter Tabs */}
 
+          <View style={styles.corkBoardCard}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterTabs}
+            >
+              {/* 
+  Scalability 
+  Not focusing the prototype 
+  Focus on explaining features and functionality
+  safety and protocols
+  Engineers:
+  orgs choose what they want to share, their corkboard their posts
+  Features / Safety / Functionality
+  NO PROTOTYPE -> Features, Process 
+
+  Designers:
+  speak on the feature 
+  corboard and maps
+
+  Storytellers:
+  personas
+  timeline
+  partenerships
+  scalability
+  
+  check for resets 
+  
+  figure out workflow situation 
+  */}
+
+              {/* search circle goes first */}
+              <Pressable
+                style={styles.filterSearch}
+                onPress={() => navigation.navigate("Search")}
+              >
+                <IonIcon name="search" size={20} color="#5b432f" />
+              </Pressable>
+              {[
+                "Help with bills",
+                "Transportation",
+                "HELP REQUESTS",
+                "ANNOUNCEMENTS",
+              ].map((tab, i) => (
                 <Pressable
-                  style={styles.filterSearch}
-                  onPress={() => navigation.navigate("Search")}
+                  key={i}
+                  style={[styles.tab, i === 0 && styles.activeTab]}
                 >
-                  <IonIcon name="search" size={20} color="#5b432f" />
-                </Pressable>
-                {[
-                  "Help with bills",
-                  "Transportation",
-                  "HELP REQUESTS",
-                  "ANNOUNCEMENTS",
-                ].map((tab, i) => (
-                  <Pressable
-                    key={i}
-                    style={[styles.tab, i === 0 && styles.activeTab]}
+                  <Text
+                    style={[styles.tabText, i === 0 && styles.activeTabText]}
                   >
-                    <Text
-                      style={[styles.tabText, i === 0 && styles.activeTabText]}
-                    >
-                      {tab}
-                    </Text>
-                  </Pressable>
-                ))}
-                <View style={{ width: 8 }} />
-              </ScrollView>
+                    {tab}
+                  </Text>
+                </Pressable>
+              ))}
+              <View style={{ width: 8 }} />
+            </ScrollView>
 
             <View style={styles.stickyNoteGrid}>
               {/* Big container for all expanded cards */}
@@ -737,121 +670,83 @@ export default function HomeBaseScreen({ route, navigation }) {
                 </View>
               </Animated.View>
             </View>
-            </View>
-          ) : (
-            <View style={styles.corkBoardCard}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterTabs}
-              >
-                <Pressable
-                  style={styles.filterSearch}
-                  onPress={() => navigation.navigate("Search")}
-                >
-                  <IonIcon name="search" size={20} color="#5b432f" />
-                </Pressable>
+          </View>
 
-                {["All", "Shelters", "Resources", "Tips"].map((tab, i) => (
-                  <Pressable
-                    key={i}
-                    style={[styles.tab, i === 0 && styles.activeTab]}
-                  >
-                    <Text
-                      style={[styles.tabText, i === 0 && styles.activeTabText]}
-                    >
-                      {tab}
-                    </Text>
-                  </Pressable>
-                ))}
-                <View style={{ width: 8 }} />
-              </ScrollView>
-
-              {/* <View style={styles.stickyNoteGrid}>
-                <View style={styles.slotWrap}> */}
-              <View style={styles.cardsWrap}>
-                <View style={styles.masonryRow}>
-                  <View style={[styles.col, styles.colLeft, { marginTop: 30 }]}>
-                    <StickyCard
-                      variant="post"
-                      category="tips"
-                      org="Leslie"
-                      avatarUri={lesliepic}
-                      title="Don’t camp near Hill St. The city is removing all tents."
-                      postedAgo="13 mins ago"
-                      tag="TIPS"
-                      views={2}
-                    />
-
-                    <StickyCard
-                      variant="post"
-                      category="resources"
-                      org="Helping Hands"
-                      title="Free hygiene kits and dental check ups today. Come join us."
-                      postedAgo="53 mins ago"
-                      tag="RESOURCES"
-                      views={22}
-                    />
-                    <StickyCard
-                      variant="post"
-                      category="tips"
-                      org="Joe"
-                      avatarUri={joepic}
-                      title="24 hour fitness is open 24/7 now. Show your ID for free entry."
-                      postedAgo="3 hrs ago"
-                      tag="TIPS"
-                      views={31}
-                    />
-                  </View>
-
-                  <View style={[styles.col, styles.colLeft, { marginTop: 30 }]}>
-                    <StickyCard
-                      variant="post"
-                      category="skills"
-                      org="Boys & Girls Club"
-                      title="Workshop: How to build an online Portfolio. Hosted by Snapchat!"
-                      postedAgo="29 mins ago"
-                      tag="DEVELOPMENT"
-                      views={10}
-                    />
-
-                    <StickyCard
-                      variant="post"
-                      category="tips"
-                      org="Andrew"
-                      avatarUri={andrewpic}
-                      title="Shelters full at St Josephs. OPCC has a few left."
-                      postedAgo="1 hr ago"
-                      tag="TIPS"
-                      views={31}
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
+          {/* MAP CARD */}
+          {/* <View style={styles.MapCard}>
+        
+        <View style={styles.cardHeader}>
+        <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
+                <Pressable //Arrow Icon
+          onPress={() => navigation.navigate("UserTab", {screen: "Map"})}
+          style={{ marginLeft: "auto" }}
+        >
+          <IonIcon name="chevron-forward-outline" size={32} color="black" />
+        </Pressable>
         </View>
 
-        {/* THE BLUE ADD BUTTON */}
-        {/* <FAB
+      </View> */}
+
+          <ScrollView>
+            <View style={styles.Events}>
+              {/* {orgs.map((event) => (
+
+            <TouchableOpacity
+              key={event.id}
+              onPress={() => handleCardTouch(event)}
+              style={styles.container}
+            >
+              <View style={styles.friends}>
+                <Text style={styles.friendsText}>
+                  {event.attending} friends going
+                </Text>
+              </View>
+              <Image
+                style={{
+                  width: "100%",
+                  aspectRatio: 1,
+                  borderRadius: 20,
+                  objectFit: "cover",
+                }}
+                resizeMode="contain"
+                source={{ uri: event.imageURL }}
+              />
+              <Card.Title style={styles.title}>{event.title}</Card.Title>
+              <View style={styles.userInfo}>
+                <Image
+                  style={styles.bitmojiUser}
+                  source={{
+                    uri: "https://sdk.bitmoji.com/render/panel/20048676-103221902646_4-s5-v1.png?transparent=1&palette=1&scale=1",
+                  }}
+                />
+                <Text style={styles.username}>{event.host}</Text>
+              </View>
+            </TouchableOpacity>
+          ))} */}
+            </View>
+          </ScrollView>
+
+          {/* THE BLUE ADD BUTTON */}
+          {/* <FAB
             onPress={toggleComponent}
             style={styles.addButton}
             visible={true}
             icon={{ name: "add", color: "white" }}
             color="#334effff"
           /> */}
-        <AddEvent
-          isVisible={visible}
-          onClose={() => {
-            toggleComponent();
-            refreshEvents();
-          }}
-        />
-        {/* <EventInfo
+          <AddEvent
+            isVisible={visible}
+            onClose={() => {
+              toggleComponent();
+              refreshEvents();
+            }}
+          />
+          {/* <EventInfo
             isVisible={detailsVisible}
             event={selectedEvent}
             onClose={() => setDetailsVisible(false)}
           /> */}
+        </View>
       </ScrollView>
     </View>
   );
@@ -1044,18 +939,14 @@ const styles = StyleSheet.create({
   },
   sheetTitle: { color: "#fff", fontSize: 22, fontWeight: "800" },
   sheetSub: { color: "#f5e9dc", marginTop: 4 },
-  //CODE GO BACK - 100%
-  noteWrap: {
-    width: "100%",
-    position: "relative",
-    marginBottom: 14, // vertical space between cards
-  },
-  // postWrap: { width: "100%" },
+
+  noteWrap: { width: "100%", position: "relative" },
+
   noteBack: {
     position: "absolute",
     top: -3,
     left: -3,
-    right: -3,
+    right: -0.5,
     bottom: -3,
     borderRadius: 9, // <= back sheet
     transform: [{ rotate: "-6deg" }], // a little tilt, not too curvy
@@ -1065,7 +956,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-
   noteBottomRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1171,8 +1061,8 @@ const styles = StyleSheet.create({
   },
 
   stickyNoteCard: {
-    // height: 175, // ← hard-coded height (try 180–200) CODE GO BACK
-    borderRadius: 20,
+    height: 175, // ← hard-coded height (try 180–200)
+    borderRadius: 16,
     // width: 164,
     padding: 16,
     shadowColor: "#000",
@@ -1182,7 +1072,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     // marginHorizontal: 0.5,
     // marginLeft:0,
-    // marginRight: 1,
+    marginRight: 1,
   },
   pin: {
     position: "absolute",
@@ -1402,9 +1292,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  //MY ORGS STICKY NOTE STYLES
   slotWrap: {
-    width: "48%", // <-- was "47%": makes the card skinny
+    width: "47.9%", // <-- was "47%": makes the card skinny
     marginBottom: 18,
   },
   slotLabel: {
@@ -1418,99 +1307,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  // make the All Posts card have a bit more bottom padding
-  postCard: {
-    paddingBottom: 20, // 👈 space under the bottom row
-    shadowOpacity: 0.08,
-  },
-
-  // All Posts type
-  postCity: { fontSize: 12, color: "#8a8a8a", marginBottom: 2 },
-  postTitle: {
-    fontSize: 16,
-    fontWeight: "400", // 👈 not bold; change to "500" if you want a touch heavier
-    lineHeight: 20,
-    color: "#1f1f1f",
-    marginBottom: 10,
-  },
-  postAgo: { fontSize: 12, color: "#7a7a7a" },
-
-  postHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 6,
-  },
-  avatar32: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(0,0,0,0.06)",
-  },
-  orgName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#4b3d33",
-    flexShrink: 1, // allow shrink when space is tight
-    flexWrap: "wrap",
-  },
-
-  postBody: {
-    fontSize: 16, // not bold
-    lineHeight: 22,
-    color: "#2a2a2a",
-    marginTop: 2,
-    marginBottom: 10,
-  },
-  postAgo: { fontSize: 12, color: "#8f7f72", marginBottom: 10 },
-
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  tagPill: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "rgba(75,61,51,0.25)",
-    backgroundColor: "rgba(255,255,255,0.6)",
-  },
-  tagText: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-    color: "#6b5b4b",
-  },
-  eyeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  eyeCount: { fontSize: 13, color: "#6b5b4b", fontWeight: "600" },
-
-  // small label used by corkboard
-  cityText: { fontSize: 12, color: "#7a7a7a", marginBottom: 4 },
-
-  masonryRow: {
-    flexDirection: "row",
-    // alignItems: "flex-start",
-    justifyContent: "space-between",
-    // gap: 14, // horizontal space between the two columns
-    paddingHorizontal: 12,
-    overflow: "visible", // clips the edges of the cards
-    paddingRight: 6,
-  },
-  col: { width: "48%" },
-  colLeft: { marginLeft: -8 },
-  colRight: { marginRight: -8 },
-  cardsWrap: {
-    marginHorizontal: -13,
-    overflow: "visible",
-  },
-avatar32: {
-  width: 28,
-  height: 28,
-  borderRadius: 14,
-  backgroundColor: 'rgba(0,0,0,0.06)', // safe fallback
-},
   slotWrapContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1518,5 +1314,4 @@ avatar32: {
     // optional: padding/margin to space grid nicely
     padding: 10,
   },
-
 });

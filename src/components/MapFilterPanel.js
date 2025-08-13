@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 
-export const MapFilterPanel = ({ collapsedText = "Tap to expand", expandedText = "Expanded content" }) => {
+export const MapFilterPanel = ({ collapsedText = "Tap to expand", expandedText = "Expanded content", children }) => {
   const [expanded, setExpanded] = useState(false);
-  const [heightAnim] = useState(new Animated.Value(80)); // start collapsed height
+  const [heightAnim] = useState(new Animated.Value(150)); // start collapsed height
 
   const toggleExpand = () => {
     Animated.timing(heightAnim, {
@@ -18,8 +18,9 @@ export const MapFilterPanel = ({ collapsedText = "Tap to expand", expandedText =
   return (
     <View style={styles.container}>
     <Animated.View style={[styles.pill, { height: heightAnim }]}>
-      <IonIcon name="filter-outline" size={28} color="purple" />
-      <Text style={styles.text}>{expanded ? expandedText : collapsedText}</Text>
+      {children}
+      {/* <IonIcon name="filter-outline" size={28} color="purple" /> */}
+      {/* <Text style={styles.text}>{expanded ? expandedText : collapsedText}</Text> */}
       <TouchableOpacity onPress={toggleExpand} style={styles.button}>
         <IonIcon name={expanded ? "chevron-up-outline" : "chevron-down-outline"} size={24} color="purple" />
       </TouchableOpacity>
@@ -33,8 +34,8 @@ const styles = StyleSheet.create({
     width: 60,
     borderRadius: 30,
     backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    // paddingVertical: 10, // padding handled by height animation
+    paddingHorizontal: 6,
+    paddingVertical: 10, // padding handled by height animation
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
@@ -42,6 +43,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    flexDirection: "column",
   },
   text: {
     marginTop: 10,
@@ -49,7 +51,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    marginTop: 15,
+    marginTop: "auto",
   },
   container: {
   position: 'absolute',
