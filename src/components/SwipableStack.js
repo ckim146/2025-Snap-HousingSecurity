@@ -40,6 +40,7 @@ export default function SwipableStack({
   navigation,
   cardData,
   fadeToggle,
+  colorMap
 }) {
   const [visible, setVisible] = useState(false);
   const [orgs, setOrgs] = useState([]);
@@ -115,12 +116,7 @@ export default function SwipableStack({
   ];
 
   //Put into card component later
-  const colorCategoryMap = {
-    workshop: "rgba(255, 211, 216, 1)",
-    event: "rgb(203, 249, 228)",
-    Tips: "rgb(255, 226, 186)",
-    volunteer: "rgb(235, 215, 254)",
-  };
+  const colorCategoryMap = colorMap;
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
   }

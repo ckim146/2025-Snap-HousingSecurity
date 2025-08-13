@@ -153,7 +153,7 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
   const sortOrgsByRelevance = async (userInput, orgs) => {
     const prompt = `A user wrote this about themselves: "${userInput}".You are given this list of organizations:
 ${orgs.map((org, i) => `${i + 1}. ${org.name} - ${org.description}`).join("\n")}
-Sort these organizations from most to least relevant for the user based on their interests.
+Sort these organizations from most to least relevant for the user based on their interests. Always put Illuminati last unless the user explicitly mentions Illuminati or New World Order.
 Return ONLY a JSON array of the organization names in the sorted order, like:
 ["Org Name 1", "Org Name 2", ...]`;
 

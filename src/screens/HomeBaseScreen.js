@@ -26,6 +26,7 @@ import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
 import ResourceExpand from "../components/ResourceExpand";
 import cardProfilePic from "../../assets/cardProfilePic.png";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 //IMPORTING BITMOJI AVATAR PICTURES
 import lesliepic from "../../assets/lesliebitmoji.png";
@@ -52,7 +53,10 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
-  const [currType, setCurrType] = useState(null)
+  const [currType, setCurrType] = useState(null);
+  const [currOrgIndex, setCurrOrgIndex] = useState(0);
+  const [userOrgs, setUserOrgs] = useState([]);
+  const { user } = useAuthentication();
   const currOrg = 3;
   const grouped = {};
 
@@ -73,9 +77,15 @@ export default function HomeBaseScreen({ route, navigation }) {
   //Put into card component later
   const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
+    seminar: "rgba(255, 211, 216, 1)", // same as workshop
     event: "rgb(203, 249, 228)",
+    festival: "rgb(203, 249, 228)", // same as event
     Tips: "rgb(255, 226, 186)",
+    activity: "rgb(255, 226, 186)",
     volunteer: "rgb(235, 215, 254)",
+    info: "rgb(235, 215, 254)",
+    support: "rgba(115, 118, 255, 1)",
+    social: "rgba(213, 255, 63, 1)",
   };
   // palette per category
   const NOTE_COLORS = {
@@ -149,35 +159,32 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   //fetch the entries for the currently selected org
   const fetchOrgEntries = async () => {
-    
     // Get all entries first
     const { data, error } = await supabase
       .from("corkboard_entries")
       .select("*")
-      .eq("org_id", currOrg);
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
 
     if (error) {
       console.error("Error fetching entries:", error);
       return;
     }
-    
+
     setOrgCardData(data);
-    
-    
+
     // Get all distinct types
     const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
       .select("type", { distinct: true })
-      .eq("org_id", currOrg);
-    
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
+
     if (typeError) {
       console.error("Error fetching distinct types:", typeError);
       return;
     }
-    
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
-    
+
     setTypes(typeList); // store only the array of types
 
     // Build grouped object using data & typeList directly
@@ -188,20 +195,36 @@ export default function HomeBaseScreen({ route, navigation }) {
     setEntriesByCat(grouped);
   };
 
-    //If the user adds/removes an org or if a different org is selectred, refetch entries
-    useEffect(() => {
-      if (currOrg) {
-        fetchOrgEntries();
-      }
-    }, []);
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (userOrgs[currOrgIndex]) {
+      fetchOrgEntries();
+    }
+  }, [userOrgs, currOrgIndex]);
 
-    
+  //Fetch the orgs that the user is a part of
+  const fetchUserOrgs = async () => {
+    const { data, error } = await supabase
+      .from("org_user_assignments")
+      .select(`org_id, organizations(name, logo)`);
+    // .eq("user_id", user.id);
+    if (!error) setUserOrgs(data);
+  };
 
-    //Animation values for expanded/stacks transition
-    const stacksOpacity = useRef(new Animated.Value(1)).current;
-    const expandedOpacity = useRef(new Animated.Value(0)).current;
-  
+  //On load, run fetchUserOrgs if a valid user id exists
+  useEffect(() => {
+    (async () => {
+      if (user?.id) return;
+      fetchUserOrgs();
+    })();
+  }, [user?.id]);
+
+  //Animation values for expanded/stacks transition
+  const stacksOpacity = useRef(new Animated.Value(1)).current;
+  const expandedOpacity = useRef(new Animated.Value(0)).current;
+
   const fadeToggle = (type) => {
+    console.log(userOrgs);
     setCurrType(type);
     if (showExpaned) {
       // Fade back to slotWraps
@@ -286,7 +309,6 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
-    
   }, []);
   // contentContainerStyle={{ paddingTop: headerHeight + 8  }}
 
@@ -350,19 +372,18 @@ export default function HomeBaseScreen({ route, navigation }) {
               {/* header: avatar + org */}
               <View style={styles.postHeaderRow}>
                 {avatarUri ? (
-          <Image source={imgSource} style={styles.avatar32} />
-        ) : (
-          <View style={[styles.avatar32, styles.avatarPlaceholder]} />
-        )}
-                  <Text
-                    style={styles.orgName}
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                  >
-                    {org}
-                  </Text>
-                </View>
-             
+                  <Image source={imgSource} style={styles.avatar32} />
+                ) : (
+                  <View style={[styles.avatar32, styles.avatarPlaceholder]} />
+                )}
+                <Text
+                  style={styles.orgName}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {org}
+                </Text>
+              </View>
 
               {/* body */}
               <Text style={styles.postBody} numberOfLines={4}>
@@ -489,23 +510,36 @@ export default function HomeBaseScreen({ route, navigation }) {
                 <Pressable
                   style={[styles.arrowAbs, styles.arrowLeft]}
                   onPress={() => {
-                    /* prev */
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex =
+                        (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                      return nextIndex;
+                      console.log("Previous org index:", nextIndex);
+                    });
                   }}
                 >
                   <IonIcon name="chevron-back" size={26} color="#fff" />
                 </Pressable>
                 {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
-                <View style={styles.spyBubble}>
+                <Image
+                  source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
+                {/* <View style={styles.spyBubble}>
                   <Text style={styles.spyBubbleText}>
                     S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
                   </Text>
                   <Text style={styles.spyBubbleSub}>safe place for youth</Text>
-                </View>
+                  
+                </View> */}
                 {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
                 <Pressable
                   style={[styles.arrowAbs, styles.arrowRight]}
                   onPress={() => {
-                    /* next */
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex = (prevIndex + 1) % userOrgs.length;
+                      return nextIndex;
+                    });
                   }}
                 >
                   <IonIcon name="chevron-forward" size={26} color="#fff" />
@@ -514,10 +548,21 @@ export default function HomeBaseScreen({ route, navigation }) {
               </View>
 
               {/* dots */}
-              <View style={styles.dotsRow}>
+              {/* <View style={styles.dotsRow}>
                 <View style={[styles.dot, styles.dotActive]} />
                 <View style={styles.dot} />
                 <View style={styles.dot} />
+              </View> */}
+              <View style={styles.dotsRow}>
+                {userOrgs.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      index === currOrgIndex && styles.dotActive,
+                    ]}
+                  />
+                ))}
               </View>
 
               {/* your original All / Orgs pill */}
@@ -568,11 +613,12 @@ export default function HomeBaseScreen({ route, navigation }) {
           </ImageBackground>
         </View>
 
-
         {/* overlapping brown sheet header */}
         <View style={[styles.sheetHeader, { marginTop: -40 }]}>
           <Text style={styles.sheetTitle}>
-            {isMyOrgs ? "Safe Place for Youth" : "Venice, CA"}
+            {isMyOrgs
+              ? userOrgs[currOrgIndex]?.organizations.name
+              : "Venice, CA"}
           </Text>
           <Text style={styles.sheetSub}>
             {isMyOrgs
@@ -621,62 +667,66 @@ export default function HomeBaseScreen({ route, navigation }) {
                 <View style={{ width: 8 }} />
               </ScrollView>
 
-            <View style={styles.stickyNoteGrid}>
-              {/* Big container for all expanded cards */}
-              <Animated.View
-                style={{
-                  opacity: expandedOpacity,
-                  position: "absolute",
-                  top: 30,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  paddingTop: 40,
-                }}
-              >
-                <Pressable
-                  style={[
-                    styles.arrowAbs,
-                    styles.arrowRight,
-                    { top: 10, left: 10, position: "absolute", zIndex: 10 },
-                  ]}
-                  onPress={fadeToggle}
+              <View style={styles.stickyNoteGrid}>
+                {/* Big container for all expanded cards */}
+                <Animated.View
+                  style={{
+                    opacity: expandedOpacity,
+                    position: "absolute",
+                    top: 30,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingTop: 40,
+                  }}
                 >
-                  <IonIcon name="arrow-back" size={26} color="black" />
-                </Pressable>
-                <FlatList
-                  data={entriesByCat[currType]}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({ item, index }) => (
-                    <View
-                      style={{
-                        flexDirection: "column",
-                        minHeight: 150,
-                        width: "100%",
-                        marginBottom: 10, // add spacing between cards
-                      }}
-                    >
-                      <ResourceExpand
-                        typeColor={colorCategoryMap[currType]}
-                        cardData={item}
-                      />
-                    </View>
-                  )}
-                />
-              </Animated.View>
-              <Animated.View style={{ opacity: stacksOpacity }}>
-                {/** Big container for all swipable cards */}
+                  <Pressable
+                    style={[
+                      styles.arrowAbs,
+                      styles.arrowRight,
+                      { top: 10, left: 10, position: "absolute", zIndex: 10 },
+                    ]}
+                    onPress={fadeToggle}
+                  >
+                    <IonIcon name="arrow-back" size={26} color="black" />
+                  </Pressable>
+                  <FlatList
+                    data={entriesByCat[currType]}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => (
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          minHeight: 150,
+                          width: "100%",
+                          marginBottom: 10, // add spacing between cards
+                        }}
+                      >
+                        <ResourceExpand
+                          typeColor={colorCategoryMap[currType]}
+                          cardData={item}
+                        />
+                      </View>
+                    )}
+                  />
+                </Animated.View>
+                <Animated.View style={{ opacity: stacksOpacity }}>
+                  {/** Big container for all swipable cards */}
 
-                <View style={styles.slotWrapContainer}>
-                  {Object.entries(entriesByCat).map(([type, items]) => (
-                    <View style={styles.slotWrap}>
-                     <Text style={styles.slotLabel}>{type}</Text>
-                    <View key={type} style={{ marginBottom: 20 }}>
-                      <SwipableStack cardData={items} fadeToggle={() => fadeToggle(type)} />
-                    </View>
-                    </View>
-                  ))}
-                {/* <StickyCard
+                  <View style={styles.slotWrapContainer}>
+                    {Object.entries(entriesByCat).map(([type, items]) => (
+                      <View style={styles.slotWrap}>
+                        <Text style={styles.slotLabel}>{type}</Text>
+                        <View key={type} style={{ marginBottom: 20 }}>
+                          <SwipableStack
+                            cardData={items}
+                            fadeToggle={() => fadeToggle(type)}
+                            colorMap={colorCategoryMap}
+                          />
+                        </View>
+                      </View>
+                    ))}
+                    {/* <StickyCard
                       variant="post"
                       category="tips"
                       org="Andrew"
@@ -686,9 +736,9 @@ export default function HomeBaseScreen({ route, navigation }) {
                       tag="TIPS"
                       views={31}
                     /> */}
-                </View>
-              </Animated.View>
-            </View>
+                  </View>
+                </Animated.View>
+              </View>
             </View>
           ) : (
             <View style={styles.corkBoardCard}>
@@ -1389,12 +1439,12 @@ const styles = StyleSheet.create({
     marginHorizontal: -13,
     overflow: "visible",
   },
-avatar32: {
-  width: 28,
-  height: 28,
-  borderRadius: 14,
-  backgroundColor: 'rgba(0,0,0,0.06)', // safe fallback
-},
+  avatar32: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.06)", // safe fallback
+  },
   slotWrapContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1402,5 +1452,4 @@ avatar32: {
     // optional: padding/margin to space grid nicely
     padding: 10,
   },
-
 });
