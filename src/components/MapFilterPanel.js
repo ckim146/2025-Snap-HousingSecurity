@@ -4,7 +4,7 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 
 export const MapFilterPanel = ({ collapsedText = "Tap to expand", expandedText = "Expanded content", children }) => {
   const [expanded, setExpanded] = useState(false);
-  const [heightAnim] = useState(new Animated.Value(80)); // start collapsed height
+  const [heightAnim] = useState(new Animated.Value(150)); // start collapsed height
 
   const toggleExpand = () => {
     Animated.timing(heightAnim, {
@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    flexDirection: "column",
   },
   text: {
     marginTop: 10,
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    marginTop: 15,
+    marginTop: "auto",
   },
   container: {
   position: 'absolute',

@@ -191,7 +191,7 @@ export default function MapScreen({ navigation }) {
     const { data, error } = await supabase
       .from("org_user_assignments")
       .select(`org_id, organizations(name, logo)`)
-      .eq("user_id", user.id);
+      // .eq("user_id", user.id);
     if (!error) setUserOrgs(data);
   };
 
@@ -375,8 +375,9 @@ export default function MapScreen({ navigation }) {
             </Marker>
           )}
           {/* adding markers to the map */}
-          {/* {markerLocations?.map((marker, index) => {
-            return (
+          {markerLocations?.map((marker, index) => {
+            if (homeBaseMode)
+            {return (
               <Marker
                 key={`${marker.id}`}
                 coordinate={{
@@ -389,9 +390,10 @@ export default function MapScreen({ navigation }) {
                   <Ionicons name="location-sharp" size={30} color="#FF5733" />
                 </View>
               </Marker>
-            );
-          })} */}
+            );}
+          })}
         </MapView>
+        <View style={styles.overlay} />
         {/*Button to toggle home base mode*/}
         {/* <View style={styles.homeBaseToggleButton}>
           <Button
@@ -418,23 +420,12 @@ export default function MapScreen({ navigation }) {
               name={"home"}
               size={20}
               color="black"
-              style={{ marginRight: 8 }}
+              style={{ marginRight: 1 }}
             />
             {/* <Text style={styles.buttonText}>
               {homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
             </Text> */}
           </Pressable>
-          <Pressable
-            onPress={toggleButtonBg}
-            style={[styles.button, isActive && styles.buttonActive]}
-          >
-            <Icon
-              name={"satellite"}
-              size={20}
-              color="black"
-              style={{ marginRight: 8 }}
-            />
-            </Pressable>
         </MapFilterPanel>
 
         <View
@@ -462,7 +453,7 @@ export default function MapScreen({ navigation }) {
             </TouchableOpacity>
           </View>
           {/*Panel that displays the org name and left right arrow buttons*/}
-          {/* <View style={styles.orgPanel}>
+          { homeBaseMode && <View style={styles.orgPanel}>
             <View style={styles.orgScroller}>
               <Pressable
                 onPress={() => {
@@ -501,7 +492,7 @@ export default function MapScreen({ navigation }) {
                 />
               </Pressable>
             </View>
-          </View> */}
+          </View> }
           <View style={[styles.bitmojiContainer, styles.shadow]}>
             <Pressable
               onPress={() => {
@@ -757,5 +748,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     color: "white",
+  },
+    overlay: {
+    ...StyleSheet.absoluteFillObject, // Covers entire map
+    backgroundColor: "rgba(0, 0, 0, 0.3)", // Change RGBA for tint color & opacity
   },
 });
