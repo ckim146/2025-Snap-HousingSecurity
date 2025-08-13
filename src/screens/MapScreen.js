@@ -25,6 +25,7 @@ import { MapFilterPanel } from "../components/MapFilterPanel";
 import useCorkboardEvents from "../utils/hooks/GetCorkboardEvents";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
 import { useRoute } from "@react-navigation/native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -41,6 +42,7 @@ export default function MapScreen({ navigation }) {
   const [currOrgIndex, setCurrOrgIndex] = useState(0);
   const [markerLocation, setMarkerLocation] = useState({});
   const route = useRoute();
+  const [isActive, setIsActive] = useState(false);
   // const { userOrgs, entries, loading } = useCorkboardEvents(3);
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
@@ -189,7 +191,7 @@ export default function MapScreen({ navigation }) {
     const { data, error } = await supabase
       .from("org_user_assignments")
       .select(`org_id, organizations(name, logo)`)
-      .eq("user_id", user.id);
+      // .eq("user_id", user.id);
     if (!error) setUserOrgs(data);
   };
 
@@ -289,45 +291,51 @@ export default function MapScreen({ navigation }) {
     setModalVisible(true);
   };
 
-useEffect(() => {
-  (async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      setErrorMsg("Permission to access location was denied");
-      return;
-    }
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
 
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);
-    setCurrentRegion({
-      latitude: 34.0211573,
-      longitude: -118.4503864,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
-  })();
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+      setCurrentRegion({
+        latitude: 34.0211573,
+        longitude: -118.4503864,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    })();
 
-  if (route.params?.coordinates) {
-    const { latitude, longitude } = route.params.coordinates;
+    if (route.params?.coordinates) {
+      const { latitude, longitude } = route.params.coordinates;
 
-    setCurrentRegion({
-      latitude,
-      longitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
-    setMarkerLocation({ latitude, longitude });
-
-    if (mapRef.current) {
-      mapRef.current.animateToRegion({
+      setCurrentRegion({
         latitude,
         longitude,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
       });
+      setMarkerLocation({ latitude, longitude });
+
+      if (mapRef.current) {
+        mapRef.current.animateToRegion({
+          latitude,
+          longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        });
+      }
     }
-  }
-}, [route.params?.coordinates]);
+  }, [route.params?.coordinates]);
+
+  const toggleButtonBg = () => {
+    setIsActive(!isActive);
+    setHomeBaseMode(!homeBaseMode);
+    console.log("marker locs", markerLocations);
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -367,8 +375,9 @@ useEffect(() => {
             </Marker>
           )}
           {/* adding markers to the map */}
-          {/* {markerLocations?.map((marker, index) => {
-            return (
+          {markerLocations?.map((marker, index) => {
+            if (homeBaseMode)
+            {return (
               <Marker
                 key={`${marker.id}`}
                 coordinate={{
@@ -381,9 +390,10 @@ useEffect(() => {
                   <Ionicons name="location-sharp" size={30} color="#FF5733" />
                 </View>
               </Marker>
-            );
-          })} */}
+            );}
+          })}
         </MapView>
+        <View style={styles.overlay} />
         {/*Button to toggle home base mode*/}
         {/* <View style={styles.homeBaseToggleButton}>
           <Button
@@ -398,10 +408,25 @@ useEffect(() => {
             }}
           />
         </View> */}
-        {/* <MapFilterPanel
+        <MapFilterPanel
           collapsedText="Tap to filter"
           expandedText="Filter options will go here"
-        /> */}
+        >
+          <Pressable
+            onPress={toggleButtonBg}
+            style={[styles.button, isActive && styles.buttonActive]}
+          >
+            <Icon
+              name={"home"}
+              size={20}
+              color="black"
+              style={{ marginRight: 1 }}
+            />
+            {/* <Text style={styles.buttonText}>
+              {homeBaseMode ? "Exit Home Base Mode" : "Enter Home Base Mode"}
+            </Text> */}
+          </Pressable>
+        </MapFilterPanel>
 
         <View
           style={[
@@ -428,7 +453,7 @@ useEffect(() => {
             </TouchableOpacity>
           </View>
           {/*Panel that displays the org name and left right arrow buttons*/}
-          {/* <View style={styles.orgPanel}>
+          { homeBaseMode && <View style={styles.orgPanel}>
             <View style={styles.orgScroller}>
               <Pressable
                 onPress={() => {
@@ -467,7 +492,7 @@ useEffect(() => {
                 />
               </Pressable>
             </View>
-          </View> */}
+          </View> }
           <View style={[styles.bitmojiContainer, styles.shadow]}>
             <Pressable
               onPress={() => {
@@ -709,5 +734,23 @@ const styles = StyleSheet.create({
     height: 50,
     marginHorizontal: 10,
     alignSelf: "center",
+  },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    // backgroundColor: "#888",
+    padding: 10,
+    borderRadius: 6,
+  },
+  buttonActive: {
+    backgroundColor: "lightblue",
+  },
+  buttonText: {
+    fontSize: 16,
+    color: "white",
+  },
+    overlay: {
+    ...StyleSheet.absoluteFillObject, // Covers entire map
+    backgroundColor: "rgba(0, 0, 0, 0.3)", // Change RGBA for tint color & opacity
   },
 });
