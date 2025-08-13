@@ -35,6 +35,11 @@ import andrewpic from "../../assets/andrewbitmoji.png";
 import emmapic from "../../assets/emmabitmoji.png";
 import joepic from "../../assets/joebitmoji.png";
 
+//IMPORTING ORGANIZATION PROFILE PICTURES
+import spypic from "../../assets/spypicture.png";
+import helpinghandspic from "../../assets/helpinghandspicture.png";
+import bandgpic from "../../assets/bandgpicture.png";
+
 //SWIPEABLE STACK COMPONENT
 import SwipableStack from "../components/SwipableStack";
 import EntryInfo from "../components/EntryInfo";
@@ -52,7 +57,14 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
-  const [currType, setCurrType] = useState(null)
+  const [currType, setCurrType] = useState(null);
+
+//added
+  const entriesKeys = Object.keys(entriesByCat || {});
+const tipsKey =
+  entriesKeys.find(k => (k || "").trim().toLowerCase() === "tips") || null;
+
+
   const currOrg = 3;
   const grouped = {};
 
@@ -74,7 +86,7 @@ export default function HomeBaseScreen({ route, navigation }) {
   const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
     event: "rgb(203, 249, 228)",
-    Tips: "rgb(255, 226, 186)",
+    tips: "rgb(255, 226, 186)",
     volunteer: "rgb(235, 215, 254)",
   };
   // palette per category
@@ -149,7 +161,6 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   //fetch the entries for the currently selected org
   const fetchOrgEntries = async () => {
-    
     // Get all entries first
     const { data, error } = await supabase
       .from("corkboard_entries")
@@ -160,24 +171,22 @@ export default function HomeBaseScreen({ route, navigation }) {
       console.error("Error fetching entries:", error);
       return;
     }
-    
+
     setOrgCardData(data);
-    
-    
+
     // Get all distinct types
     const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
       .select("type", { distinct: true })
       .eq("org_id", currOrg);
-    
+
     if (typeError) {
       console.error("Error fetching distinct types:", typeError);
       return;
     }
-    
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
-    
+
     setTypes(typeList); // store only the array of types
 
     // Build grouped object using data & typeList directly
@@ -188,19 +197,17 @@ export default function HomeBaseScreen({ route, navigation }) {
     setEntriesByCat(grouped);
   };
 
-    //If the user adds/removes an org or if a different org is selectred, refetch entries
-    useEffect(() => {
-      if (currOrg) {
-        fetchOrgEntries();
-      }
-    }, []);
+  //If the user adds/removes an org or if a different org is selectred, refetch entries
+  useEffect(() => {
+    if (currOrg) {
+      fetchOrgEntries();
+    }
+  }, []);
 
-    
+  //Animation values for expanded/stacks transition
+  const stacksOpacity = useRef(new Animated.Value(1)).current;
+  const expandedOpacity = useRef(new Animated.Value(0)).current;
 
-    //Animation values for expanded/stacks transition
-    const stacksOpacity = useRef(new Animated.Value(1)).current;
-    const expandedOpacity = useRef(new Animated.Value(0)).current;
-  
   const fadeToggle = (type) => {
     setCurrType(type);
     if (showExpaned) {
@@ -286,7 +293,6 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchData();
-    
   }, []);
   // contentContainerStyle={{ paddingTop: headerHeight + 8  }}
 
@@ -438,7 +444,11 @@ export default function HomeBaseScreen({ route, navigation }) {
                     /* open profile */
                   }}
                 >
-                  <View style={styles.avatar} />
+                  <Image
+                    source={alexpic}
+                    style={styles.avatarImg}
+                    resizeMode="cover"
+                  />
                 </Pressable>
               </View>
 
@@ -484,40 +494,46 @@ export default function HomeBaseScreen({ route, navigation }) {
 
               {/* S.P.Y bubble w/ arrows */}
               {/* <View style={styles.carouselRow}> */}
-              <View style={styles.spyBubbleWrap}>
-                <Pressable
-                  style={[styles.arrowAbs, styles.arrowLeft]}
-                  onPress={() => {
-                    /* prev */
-                  }}
-                >
-                  <IonIcon name="chevron-back" size={26} color="#fff" />
-                </Pressable>
-                {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
-                <View style={styles.spyBubble}>
-                  <Text style={styles.spyBubbleText}>
-                    S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
-                  </Text>
-                  <Text style={styles.spyBubbleSub}>safe place for youth</Text>
-                </View>
-                {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
-                <Pressable
-                  style={[styles.arrowAbs, styles.arrowRight]}
-                  onPress={() => {
-                    /* next */
-                  }}
-                >
-                  <IonIcon name="chevron-forward" size={26} color="#fff" />
-                </Pressable>
-                {/* </View> */}
-              </View>
+              {isMyOrgs && (
+                <>
+                  <View style={styles.spyBubbleWrap}>
+                    <Pressable
+                      style={[styles.arrowAbs, styles.arrowLeft]}
+                      onPress={() => {
+                        /* prev */
+                      }}
+                    >
+                      <IonIcon name="chevron-back" size={26} color="#fff" />
+                    </Pressable>
+                    {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
+                    <View style={styles.spyBubble}>
+                      <Text style={styles.spyBubbleText}>
+                        S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
+                      </Text>
+                      <Text style={styles.spyBubbleSub}>
+                        safe place for youth
+                      </Text>
+                    </View>
+                    {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
+                    <Pressable
+                      style={[styles.arrowAbs, styles.arrowRight]}
+                      onPress={() => {
+                        /* next */
+                      }}
+                    >
+                      <IonIcon name="chevron-forward" size={26} color="#fff" />
+                    </Pressable>
+                    {/* </View> */}
+                  </View>
 
-              {/* dots */}
-              <View style={styles.dotsRow}>
-                <View style={[styles.dot, styles.dotActive]} />
-                <View style={styles.dot} />
-                <View style={styles.dot} />
-              </View>
+                  {/* dots */}
+                  <View style={styles.dotsRow}>
+                    <View style={[styles.dot, styles.dotActive]} />
+                    <View style={styles.dot} />
+                    <View style={styles.dot} />
+                  </View>
+                </>
+              )}
 
               {/* your original All / Orgs pill */}
               {/* <View style={[styles.toggleContainer, { marginTop: 12 }]}>
@@ -619,62 +635,84 @@ export default function HomeBaseScreen({ route, navigation }) {
                 <View style={{ width: 8 }} />
               </ScrollView>
 
-            <View style={styles.stickyNoteGrid}>
-              {/* Big container for all expanded cards */}
-              <Animated.View
-                style={{
-                  opacity: expandedOpacity,
-                  position: "absolute",
-                  top: 30,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  paddingTop: 40,
-                }}
-              >
-                <Pressable
-                  style={[
-                    styles.arrowAbs,
-                    styles.arrowRight,
-                    { top: 10, left: 10, position: "absolute", zIndex: 10 },
-                  ]}
-                  onPress={fadeToggle}
+              <View style={styles.stickyNoteGrid}>
+                {/* Big container for all expanded cards */}
+                <Animated.View
+                  style={{
+                    opacity: expandedOpacity,
+                    position: "absolute",
+                    top: 30,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingTop: 40,
+                  }}
                 >
-                  <IonIcon name="arrow-back" size={26} color="black" />
-                </Pressable>
-                <FlatList
-                  data={entriesByCat[currType]}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({ item, index }) => (
-                    <View
-                      style={{
-                        flexDirection: "column",
-                        minHeight: 150,
-                        width: "100%",
-                        marginBottom: 10, // add spacing between cards
-                      }}
-                    >
-                      <ResourceExpand
-                        typeColor={colorCategoryMap[currType]}
-                        cardData={item}
-                      />
-                    </View>
-                  )}
-                />
-              </Animated.View>
-              <Animated.View style={{ opacity: stacksOpacity }}>
-                {/** Big container for all swipable cards */}
+                  <Pressable
+                    style={[
+                      styles.arrowAbs,
+                      styles.arrowRight,
+                      { top: 10, left: 10, position: "absolute", zIndex: 10 },
+                    ]}
+                    onPress={fadeToggle}
+                  >
+                    <IonIcon name="arrow-back" size={26} color="black" />
+                  </Pressable>
+                  <FlatList
+                    data={entriesByCat[currType]}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => (
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          minHeight: 150,
+                          width: "100%",
+                          marginBottom: 10, // add spacing between cards
+                        }}
+                      >
+                        <ResourceExpand
+                          typeColor={colorCategoryMap[currType]}
+                          cardData={item}
+                        />
+                      </View>
+                    )}
+                  />
+                </Animated.View>
+                <Animated.View style={{ opacity: stacksOpacity }}>
+                  {/** Big container for all swipable cards */}
 
-                <View style={styles.slotWrapContainer}>
-                  {Object.entries(entriesByCat).map(([type, items]) => (
-                    <View style={styles.slotWrap}>
-                     <Text style={styles.slotLabel}>{type}</Text>
-                    <View key={type} style={{ marginBottom: 20 }}>
-                      <SwipableStack cardData={items} fadeToggle={() => fadeToggle(type)} />
-                    </View>
-                    </View>
-                  ))}
-                  {/* <View style={styles.slotWrap}>
+                  <View style={styles.slotWrapContainer}>
+                    {Object.entries(entriesByCat).map(([type, items]) => (
+                      <View style={styles.slotWrap}>
+                        <Text style={styles.slotLabel}>{type}</Text>
+                        <View key={type} style={{ marginBottom: 20 }}>
+                          <SwipableStack
+                            cardData={items}
+                            fadeToggle={() => fadeToggle(type)}
+                            
+                          />
+                        </View>
+
+                        
+                      </View>
+                    ))}
+
+                    {!tipsKey && (
+    <View style={styles.slotWrap}>
+      <Text style={styles.slotLabel}>tips</Text>
+      <StickyCard
+        category="tips"
+        org="Member"
+        title="Emma"
+        avatarUri={emmapic}
+        timeLine="New food vouchers at the front desk."
+        postedAgo="16 mins ago"
+        showBack
+        showPin
+      />
+    </View>
+  )}
+                    {/* <View style={styles.slotWrap}>
                     <Text style={styles.slotLabel}>Resources</Text>
                     <StickyCard
                       category="resources"
@@ -716,16 +754,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                     />
                   </View>
 
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Tips</Text>
-                    <StickyCard
-                      category="tips"
-                      city="Member"
-                      title="Emma"
-                      timeLine="New food vouchers at the front desk."
-                      postedAgo="16 mins ago"
-                    />
-                  </View>
+                  
 
                   <View style={styles.stickyNote}>
                     <Text style={styles.noteTitle}>Backpack Giveaway</Text>
@@ -733,10 +762,10 @@ export default function HomeBaseScreen({ route, navigation }) {
                     <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
                   </View> */}
 
-                  {/* You can add more sticky notes or map over an array */}
-                </View>
-              </Animated.View>
-            </View>
+                    {/* You can add more sticky notes or map over an array */}
+                  </View>
+                </Animated.View>
+              </View>
             </View>
           ) : (
             <View style={styles.corkBoardCard}>
@@ -787,6 +816,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                       variant="post"
                       category="resources"
                       org="Helping Hands"
+                      avatarUri={helpinghandspic}
                       title="Free hygiene kits and dental check ups today. Come join us."
                       postedAgo="53 mins ago"
                       tag="RESOURCES"
@@ -809,6 +839,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                       variant="post"
                       category="skills"
                       org="Boys & Girls Club"
+                      avatarUri={bandgpic}
                       title="Workshop: How to build an online Portfolio. Hosted by Snapchat!"
                       postedAgo="29 mins ago"
                       tag="DEVELOPMENT"
@@ -823,7 +854,17 @@ export default function HomeBaseScreen({ route, navigation }) {
                       title="Shelters full at St Josephs. OPCC has a few left."
                       postedAgo="1 hr ago"
                       tag="TIPS"
-                      views={31}
+                      views={36}
+                    />
+                    <StickyCard
+                      variant="post"
+                      category="social"
+                      org="Safe Place for Youth"
+                      avatarUri={spypic}
+                      title="Mural painting at SPY today! Come join us for food and a creative time!"
+                      postedAgo="6 hrs ago"
+                      tag="SOCIAL"
+                      views={55}
                     />
                   </View>
                 </View>
@@ -1256,8 +1297,19 @@ const styles = StyleSheet.create({
 
   h1: { color: "#fff", fontSize: 28, fontWeight: "800" },
   subtitle: { color: "#fff", opacity: 0.9, marginTop: 6, textAlign: "center" },
-  avatarBtn: { height: 40, width: 40, borderRadius: 20, overflow: "hidden" },
-  avatar: { flex: 1, backgroundColor: "#ffd66b" }, // replace with <Image> if you have one
+  avatarBtn: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#eec86f",
+  },
+  avatar: { flex: 1, backgroundColor: "#eec86fff" }, // replace with <Image> if you have one
+  avatarImg: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20, // ALEX PROFILE PIC ON TOP RIGHT
+  },
   segment: {
     flexDirection: "row",
     alignSelf: "center",
@@ -1505,12 +1557,12 @@ const styles = StyleSheet.create({
     marginHorizontal: -13,
     overflow: "visible",
   },
-avatar32: {
-  width: 28,
-  height: 28,
-  borderRadius: 14,
-  backgroundColor: 'rgba(0,0,0,0.06)', // safe fallback
-},
+  avatar32: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.06)", // safe fallback
+  },
   slotWrapContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1518,5 +1570,4 @@ avatar32: {
     // optional: padding/margin to space grid nicely
     padding: 10,
   },
-
 });

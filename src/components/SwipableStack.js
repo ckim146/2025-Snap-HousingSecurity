@@ -30,6 +30,7 @@ import Color from "color";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import EntryInfo from "../components/EntryInfo";
 import * as Location from "expo-location";
+import {HomeBaseScreen} from "../screens/HomeBaseScreen";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const CARD_WIDTH = SCREEN_WIDTH * 0.4; // same proportion as your sticky notes
@@ -40,6 +41,11 @@ export default function SwipableStack({
   navigation,
   cardData,
   fadeToggle,
+  isMyOrgs = false,
+  userOrgs = [],
+  activeOrgName = "",
+  onPrevOrg,
+  onNextOrg,
 }) {
   const [visible, setVisible] = useState(false);
   const [orgs, setOrgs] = useState([]);
@@ -59,7 +65,7 @@ export default function SwipableStack({
     orgContainerVisible: false,
   });
   //put into card copmponent
-  const [cards, setCards] = useState(orgCardData);
+  // const [cards, setCards] = useState(orgCardData);
   const [cardIndex, setCardIndex] = useState(0);
   const [popupX, setPopupX] = useState(null);
   const [popupY, setPopupY] = useState(null);
@@ -121,6 +127,27 @@ export default function SwipableStack({
     Tips: "rgb(255, 226, 186)",
     volunteer: "rgb(235, 215, 254)",
   };
+
+
+
+  //added 
+  const NOTE_COLORS = {
+  resources: { paper: "#DFF6EE", accent: "#1A9E74", arrowBg: "#F5FFFC" },
+  skills:    { paper: "#FADDE1", accent: "#C44A65", arrowBg: "#FFF1F4" },
+  social:    { paper: "#E5D5FF", accent: "#5C3FBF", arrowBg: "#F6F2FF" },
+  tips:      { paper: "#F6E0B8", accent: "#8B6A2E", arrowBg: "#FFF7E6" },
+};
+
+const typeToNote = (t = "") => {
+  const k = t.toLowerCase();
+  if (k.includes("skill") || k.includes("workshop")) return "skills";
+  if (k.includes("volunteer") || k.includes("social")) return "social";
+  if (k.includes("tip")) return "tips";
+  return "resources";
+};
+
+
+
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
   }
@@ -145,11 +172,13 @@ export default function SwipableStack({
   const panGesture = Gesture.Pan();
 
   const combinedGesture = Gesture.Simultaneous(tapGesture, panGesture);
-
-  function handleCardTouch(event) {
-    setDetailsVisible(true);
+//fixed
+   const handleCardTouch = useCallback((event) => {
     setSelectedEvent(event);
-  }
+    setDetailsVisible(true);
+  }, []);
+
+
 
   //Initially fetch unorganized set of orgs
   const fetchData = async () => {
@@ -222,42 +251,22 @@ export default function SwipableStack({
   useEffect(() => {
     const fetchAllAddresses = async () => {
       if (!Array.isArray(cardData)) return;
-
-      // Map each item to a reverse geocode promise or null if invalid
-      const promises = cardData.map((card) => {
-        const coords = card.location;
-
-        if (
-          !coords ||
-          typeof coords.latitude !== "number" ||
-          typeof coords.longitude !== "number"
-        ) {
-          return Promise.resolve(null); // skip invalid
-        }
-
-        return Location.reverseGeocodeAsync({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        })
-          .then((geocode) => {
-            if (geocode.length > 0) {
-              const { street, city, region } = geocode[0];
-
-              return `${city}, ${region}`; // or format however you want
-            }
-            return null;
+      const results = await Promise.all(
+        cardData.map((card) => {
+          const coords = card?.location;
+          if (!coords || typeof coords.latitude !== "number" || typeof coords.longitude !== "number") {
+            return Promise.resolve(null);
+          }
+          return Location.reverseGeocodeAsync({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
           })
-          .catch((err) => {
-            console.error("Reverse geocode failed:", err);
-            return null;
-          });
-      });
-
-      // Wait for all to finish
-      const results = await Promise.all(promises);
-      setAddresses(results); // array of addresses or nulls
+          .then((g) => (g?.[0] ? `${g[0].city}, ${g[0].region}` : null))
+          .catch(() => null);
+        })
+      );
+      setAddresses(results);
     };
-
     fetchAllAddresses();
   }, [cardData]);
 
@@ -276,6 +285,116 @@ export default function SwipableStack({
       swiperRef.current.jumpToCardIndex(0);
     }
   };
+
+
+
+// // state
+// const [userOrgs, setUserOrgs] = useState([]);
+// const [activeOrgIdx, setActiveOrgIdx] = useState(0);
+
+// // derived
+// const activeOrg = userOrgs[activeOrgIdx] || null;
+// const activeOrgId = activeOrg?.org_id ?? activeOrg?.id;   // depending on your select shape
+// const activeOrgName = activeOrg?.organizations?.name ?? activeOrg?.name ?? "My Org";
+
+
+// useEffect(() => {
+//   const loadUserOrgs = async () => {
+//     const { data, error } = await supabase
+//       .from("org_user_assignments")
+//       .select(`org_id, organizations(name, logo)`)
+//       .eq("user_id", user.id);
+
+//     if (!error) {
+//       // keep whatever shape you prefer — just make sure activeOrgId resolves
+//       setUserOrgs(data || []);
+//       setActiveOrgIdx(0);
+//     } else {
+//       console.error(error);
+//     }
+//   };
+//   if (user?.id) loadUserOrgs();
+// }, [user?.id]);
+
+
+// useEffect(() => {
+//   if (!activeOrgId) return;
+
+//   const fetchOrgEntries = async () => {
+//     const { data, error } = await supabase
+//       .from("corkboard_entries")
+//       .select("*")
+//       .eq("org_id", activeOrgId)
+//       .order("created_at", { ascending: false });
+
+//     if (error) { console.error(error); return; }
+
+//     // group by type for your grid-of-stacks UI
+//     const grouped = {};
+//     for (const row of data) {
+//       const t = row.type || "Other";
+//       (grouped[t] ||= []).push({
+//         id: row.id,
+//         title: row.title,
+//         date: row.date,          // adjust to your column names
+//         time: row.time,
+//         type: row.type,          // "Tips" | "Skills" | "Social" | "Resources" | ...
+//         age: row.created_at,     // you can format to "13 mins" in render if you want
+//         location: row.location,  // if you store JSON coords
+//         pinned: row.pinned === true,
+//         user: row.user,
+//         profilePic: row.profile_pic ? { uri: row.profile_pic } : undefined,
+//       });
+//     }
+//     setEntriesByCat(grouped);
+//   };
+
+//   fetchOrgEntries();
+// }, [activeOrgId]);
+
+
+
+
+
+// <View style={styles.slotWrapContainer}>
+//   {Object.entries(entriesByCat).map(([type, items]) => (
+//     <View key={type} style={styles.slotWrap}>
+//       <Text style={styles.slotLabel}>{type}</Text>
+//       <SwipableStack
+//         key={activeOrgId + "-" + type} // reset swiper when org changes
+//         cardData={items}
+//         fadeToggle={() => fadeToggle(type)}
+//       />
+//       <SwipableStack
+//   isMyOrgs={isMyOrgs}
+//   userOrgs={userOrgs}
+//   activeOrgName={activeOrgName}
+//   onPrevOrg={prevOrg}
+//   onNextOrg={nextOrg}
+//   cardData={items}
+//   fadeToggle={() => fadeToggle(type)}
+// />
+
+//     </View>
+//   ))}
+// </View>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <View style={styles.cardContainer}>
@@ -311,165 +430,168 @@ export default function SwipableStack({
       <Swiper
         ref={swiperRef}
         cards={cardsWithAddresses}
-        renderCard={(card, index) => (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colorCategoryMap[card.type],
-                width: CARD_WIDTH,
-              },
-            ]}
-          >
-            <View style={styles.cardContent}>
-              {/*The horizontal view containing category and card # */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <View>
-                  {typeof card.address === "string" && (
-                    <Text
-                      style={{
-                        alignSelf: "center",
-                        color: Color(colorCategoryMap[card.type])
-                          .darken(0.7)
-                          .rgb()
-                          .string(),
-                        fontSize: 10,
-                      }}
-                    >
-                      {card.address}
-                    </Text>
-                  )}
-                </View>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.7)
-                      .rgb()
-                      .string(),
-                  }}
-                >
-                  {cardIndex + 1}/{cardData.length}
-                </Text>
-              </View>
+        // renderCard={(card, index) => (
+        //   <View
+        //     style={[
+        //       styles.card,
+        //       {
+        //         backgroundColor: colorCategoryMap[card.type],
+        //         width: CARD_WIDTH,
+        //       },
+        //     ]}
+        //   >
+        //     <View style={styles.cardContent}>
+        //       {/*The horizontal view containing category and card # */}
+        //       <View
+        //         style={{
+        //           flexDirection: "row",
+        //           justifyContent: "space-between",
+        //         }}
+        //       >
+        //         <View>
+        //           {typeof card.address === "string" && (
+        //             <Text
+        //               style={{
+        //                 alignSelf: "center",
+        //                 color: Color(colorCategoryMap[card.type])
+        //                   .darken(0.7)
+        //                   .rgb()
+        //                   .string(),
+        //                 fontSize: 10,
+        //               }}
+        //             >
+        //               {card.address}
+        //             </Text>
+        //           )}
+        //         </View>
+        //         <Text
+        //           style={{
+        //             fontSize: 14,
+        //             color: Color(colorCategoryMap[card.type])
+        //               .darken(0.7)
+        //               .rgb()
+        //               .string(),
+        //           }}
+        //         >
+        //           {cardIndex + 1}/{cardData.length}
+        //         </Text>
+        //       </View>
 
-              {card.type == "Tips" ? (
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginBottom: 10,
-                    marginTop: 10,
-                  }}
-                >
-                  <Image
-                    source={card.profilePic}
-                    style={{
-                      resizeMode: "cover",
-                      height: 50,
-                      width: 50,
-                      marginRight: 10,
-                    }}
-                  />
-                  <View style={{ flexDirection: "column" }}>
-                    <Text style={[styles.title, { marginBottom: 0 }]}>
-                      {card.user}
-                    </Text>
-                    <Text
-                      style={{
-                        color: Color(colorCategoryMap[card.type])
-                          .darken(0.5)
-                          .rgb()
-                          .string(),
-                      }}
-                    >
-                      Verified Member
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
-              <Pressable onPress={() => handleCardTouch(card)}>
-                <Text
-                  style={{
-                    fontSize: 22,
-                    color: "#4b3b1f",
-                    marginBottom: 12,
-                  }}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                  // adjustsFontSizeToFit
-                  minimumFontScale={0.8}
-                >
-                  {card.title}
-                </Text>
-              </Pressable>
-              <View style={{ flexDirection: "column" }}>
-                <Text
-                  style={[
-                    styles.title,
-                    {
-                      marginBottom: 0,
-                      marginTop: 0,
-                      color: Color(colorCategoryMap[card.type])
-                        .darken(0.7)
-                        .rgb()
-                        .string(),
-                    },
-                  ]}
-                >
-                  {card.date}
-                </Text>
-                <Text
-                  style={{
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.7)
-                      .rgb()
-                      .string(),
-                  }}
-                >
-                  {card.time}
-                </Text>
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Text
-                  style={{
-                    color: Color(colorCategoryMap[card.type])
-                      .darken(0.5)
-                      .rgb()
-                      .string(),
-                  }}
-                >
-                  {card.age} ago
-                </Text>
-                <Pressable onPress={fadeToggle}>
-                  <View
-                    style={[
-                      styles.arrowBtn,
-                      {
-                        backgroundColor: Color(colorCategoryMap[card.type])
-                          .lighten(0.5)
-                          .rgb()
-                          .string(),
-                      },
-                    ]}
-                  >
-                    <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        )}
+        //       {card.type == "Tips" ? (
+        //         <View
+        //           style={{
+        //             flexDirection: "row",
+        //             alignItems: "center",
+        //             marginBottom: 10,
+        //             marginTop: 10,
+        //           }}
+        //         >
+        //           <Image
+        //             source={card.profilePic}
+        //             style={{
+        //               resizeMode: "cover",
+        //               height: 50,
+        //               width: 50,
+        //               marginRight: 10,
+        //             }}
+        //           />
+        //           <View style={{ flexDirection: "column" }}>
+        //             <Text style={[styles.title, { marginBottom: 0 }]}>
+        //               {card.user}
+        //             </Text>
+        //             <Text
+        //               style={{
+        //                 color: Color(colorCategoryMap[card.type])
+        //                   .darken(0.5)
+        //                   .rgb()
+        //                   .string(),
+        //               }}
+        //             >
+        //               Verified Member
+        //             </Text>
+        //           </View>
+        //         </View>
+        //       ) : null}
+        //       <Pressable onPress={() => handleCardTouch(card)}>
+        //         <Text
+        //           style={{
+        //             fontSize: 22,
+        //             color: "#4b3b1f",
+        //             marginBottom: 12,
+        //           }}
+        //           numberOfLines={2}
+        //           ellipsizeMode="tail"
+        //           // adjustsFontSizeToFit
+        //           minimumFontScale={0.8}
+        //         >
+        //           {card.title}
+        //         </Text>
+        //       </Pressable>
+        //       <View style={{ flexDirection: "column" }}>
+        //         <Text
+        //           style={[
+        //             styles.title,
+        //             {
+        //               marginBottom: 0,
+        //               marginTop: 0,
+        //               color: Color(colorCategoryMap[card.type])
+        //                 .darken(0.7)
+        //                 .rgb()
+        //                 .string(),
+        //             },
+        //           ]}
+        //         >
+        //           {card.date}
+        //         </Text>
+        //         <Text
+        //           style={{
+        //             color: Color(colorCategoryMap[card.type])
+        //               .darken(0.7)
+        //               .rgb()
+        //               .string(),
+        //           }}
+        //         >
+        //           {card.time}
+        //         </Text>
+        //       </View>
+        //       <View
+        //         style={{
+        //           flexDirection: "row",
+        //           justifyContent: "space-between",
+        //         }}
+        //       >
+        //         <Text
+        //           style={{
+        //             color: Color(colorCategoryMap[card.type])
+        //               .darken(0.5)
+        //               .rgb()
+        //               .string(),
+        //           }}
+        //         >
+        //           {card.age} ago
+        //         </Text>
+        //         <Pressable onPress={fadeToggle}>
+        //           <View
+        //             style={[
+        //               styles.arrowBtn,
+        //               {
+        //                 backgroundColor: Color(colorCategoryMap[card.type])
+        //                   .lighten(0.5)
+        //                   .rgb()
+        //                   .string(),
+        //               },
+        //             ]}
+        //           >
+        //             <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+        //           </View>
+        //         </Pressable>
+        //       </View>
+        //     </View>
+        //   </View>
+        // )}
+
+
+        //STYLING OF THE CARDS(BOLDER)
         onSwiped={(index) => {
           setCardIndex((prev) => prev + 1);
         }}
@@ -483,9 +605,44 @@ export default function SwipableStack({
         stackScale={1}
         containerStyle={styles.swiperContainer}
         cardStyle={styles.card}
-        // disableBottomSwipe
-        // disableTopSwipe
-      />
+
+        renderCard={(card) => {
+    const noteKey = typeToNote(card?.type);
+    const c = NOTE_COLORS[noteKey] || NOTE_COLORS.resources;
+
+    return (
+      <View style={[styles.card, { backgroundColor: c.paper, width: CARD_WIDTH }]}>
+        <View style={styles.cardContent}>
+          {!!card?.address && <Text style={styles.cityText}>{card.address}</Text>}
+
+          <Pressable onPress={() => handleCardTouch(card)}>
+            <Text style={styles.noteTitleBig} numberOfLines={2} ellipsizeMode="tail">
+              {card?.title}
+            </Text>
+          </Pressable>
+
+          {!!card?.date && <Text style={[styles.whenBold, { color: c.accent }]}>{card.date}</Text>}
+          {!!card?.time && <Text style={styles.whenSub}>{card.time}</Text>}
+
+          <View style={styles.noteBottomRow}>
+            {!!card?.age && <Text style={styles.agoText}>{card.age} ago</Text>}
+            <Pressable onPress={fadeToggle}>
+              <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
+                <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+              </View>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    );
+  }}
+/>
+{/* NEW STYLING ENDS */}
+
+
+        {/* // disableBottomSwipe
+        // disableTopSwipe */}
+      {/* /> */}
       {/* {detailsVisible && (
         <>
           <View style={styles.overlay} />
@@ -620,4 +777,25 @@ resetButton: {
   backgroundColor: 'rgba(0,0,0,0.1)',
   zIndex: 10
 },
+// SwipableStack styles- NEW
+pin: {
+  position: "absolute",
+  top: 10,
+  right: 10,
+  width: 14,
+  height: 14,
+  borderRadius: 7,
+  backgroundColor: "#D3382F",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.25,
+  shadowRadius: 1.5,
+},
+
+cityText: { fontSize: 12, color: "#7a7a7a", marginBottom: 4 },
+noteTitleBig: { fontSize: 18, fontWeight: "800", color: "#3a3a3a", marginBottom: 10 },
+whenBold: { fontSize: 16, fontWeight: "800", marginBottom: 2 },
+whenSub: { fontSize: 14, color: "#555", marginBottom: 8 },
+noteBottomRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: "auto" },
+agoText: { fontSize: 12, color: "#6f6f6f" },
 });
