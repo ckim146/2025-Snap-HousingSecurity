@@ -177,19 +177,18 @@ export default function HomeBaseScreen({ route, navigation }) {
               {/* header: avatar + org */}
               <View style={styles.postHeaderRow}>
                 {avatarUri ? (
-          <Image source={imgSource} style={styles.avatar32} />
-        ) : (
-          <View style={[styles.avatar32, styles.avatarPlaceholder]} />
-        )}
-                  <Text
-                    style={styles.orgName}
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                  >
-                    {org}
-                  </Text>
-                </View>
-             
+                  <Image source={imgSource} style={styles.avatar32} />
+                ) : (
+                  <View style={[styles.avatar32, styles.avatarPlaceholder]} />
+                )}
+                <Text
+                  style={styles.orgName}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {org}
+                </Text>
+              </View>
 
               {/* body */}
               <Text style={styles.postBody} numberOfLines={4}>
@@ -394,7 +393,6 @@ export default function HomeBaseScreen({ route, navigation }) {
             </View>
           </ImageBackground>
         </View>
-
 
         {/* overlapping brown sheet header */}
         <View style={[styles.sheetHeader, { marginTop: -40 }]}>
@@ -1277,11 +1275,10 @@ const styles = StyleSheet.create({
     marginHorizontal: -13,
     overflow: "visible",
   },
-avatar32: {
-  width: 28,
-  height: 28,
-  borderRadius: 14,
-  backgroundColor: 'rgba(0,0,0,0.06)', // safe fallback
-},
-
+  avatar32: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.06)", // safe fallback
+  },
 });
