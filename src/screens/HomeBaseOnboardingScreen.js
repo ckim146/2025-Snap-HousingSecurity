@@ -43,10 +43,43 @@ export default function HomeBaseOnboardingScreen({ route, navigation }) {
     isSorting: true,
     orgContainerVisible: false,
   });
+
+  const [myOrgs, setMyOrgs] = useState([]);            // [{id, name, logo}]
+const [orgIdx, setOrgIdx] = useState(0);
+const currentOrg = myOrgs[orgIdx] || null;
+
+const [entriesCache, setEntriesCache] = useState({}); // { [orgId]: { [type]: [] } }
+const [loadingEntries, setLoadingEntries] = useState(false);
+
+
+
+
   //put into card copmponent
   const [cards, setCards] = useState(orgCardData);
   const [cardIndex, setCardIndex] = useState(0);
   const darkColor = "#62411b";
+
+//added
+const [myOrgIds, setMyOrgIds] = useState(new Set()); // which orgs this user follows
+
+const loadMyOrgs = useCallback(async () => {
+  if (!user || !user.id) return;
+  const { data, error } = await supabase
+    .from("org_user_assignments")
+    .select("org_id")
+    .eq("user_id", user.id);
+
+  if (!error && Array.isArray(data)) {
+    setMyOrgIds(new Set(data.map((r) => r.org_id)));
+  } else if (error) {
+    console.log("loadMyOrgs error:", error);
+  }
+}, [user && user.id]);
+
+useEffect(() => {
+  loadMyOrgs();
+}, [loadMyOrgs]);
+
 
   //Adjust so that it populates with supdabase data. Pass to card component
   const orgCardData = [
@@ -196,40 +229,90 @@ Return ONLY a JSON array of the organization names in the sorted order, like:
 
   /*When a organization card is pressed, this function will submit the org assignment to Supabase. Constraint set on Supabase table
 to prevent duplicate entries, so this will only work if the user has not already joined the organization.*/
-  const submitToSupabase = async (orgData) => {
-    let newUserOrgAssignment = {
-      user_id: user.id,
-      org_id: orgData.id,
-    };
-    try {
-      console.log(
-        "Submitting org assignment to Supabase:",
-        newUserOrgAssignment
-      );
-      const { data, error } = await supabase
-        .from("org_user_assignments") //
-        .insert([newUserOrgAssignment]); // Insert the org assignment data
+  // const submitToSupabase = async (orgData) => {
+  //   let newUserOrgAssignment = {
+  //     user_id: user.id,
+  //     org_id: orgData.id,
+  //   };
+  //   try {
+  //     console.log(
+  //       "Submitting org assignment to Supabase:",
+  //       newUserOrgAssignment
+  //     );
+  //     const { data, error } = await supabase
+  //       .from("org_user_assignments") //
+  //       .insert([newUserOrgAssignment]); // Insert the org assignment data
 
-      if (error) {
-        console.error("org assignment already exists:", error);
-      } else {
-        console.log("Data inserted:", data); //Will log "null" even when it is successful. Needs a select query to return the inserted data
-      }
-    } catch (error) {
-      console.error("Unexpected error:", error);
+  //     if (error) {
+  //       console.error("org assignment already exists:", error);
+  //     } else {
+  //       console.log("Data inserted:", data); //Will log "null" even when it is successful. Needs a select query to return the inserted data
+  //     }
+  //   } catch (error) {
+  //     console.error("Unexpected error:", error);
+  //   }
+  //   // Remove clicked org from the queue
+  //   const updatedAll = orgState.sortedOrgs.filter(
+  //     (org) => org.id !== orgData.id
+  //   );
+  //   const newVisible = updatedAll.slice(0, 3);
+  //   // setOrgs(updatedAll);
+  //   setOrgState((prevState) => ({
+  //     ...prevState,
+  //     sortedOrgs: updatedAll,
+  //     visibleOrgs: newVisible,
+  //   }));
+  // };
+
+const toggleFollow = async (org) => {
+  if (!user || !user.id) return;
+
+  const alreadyFollowing = myOrgIds.has(org.id);
+
+  if (alreadyFollowing) {
+    // UNFOLLOW
+    const { error } = await supabase
+      .from("org_user_assignments")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("org_id", org.id);
+
+    if (!error) {
+      setMyOrgIds((prev) => {
+        const next = new Set(prev);
+        next.delete(org.id);
+        return next;
+      });
+    } else {
+      console.log("unfollow error:", error);
     }
-    // Remove clicked org from the queue
-    const updatedAll = orgState.sortedOrgs.filter(
-      (org) => org.id !== orgData.id
-    );
-    const newVisible = updatedAll.slice(0, 3);
-    // setOrgs(updatedAll);
-    setOrgState((prevState) => ({
-      ...prevState,
-      sortedOrgs: updatedAll,
-      visibleOrgs: newVisible,
-    }));
-  };
+  } else {
+    // FOLLOW
+    const { error } = await supabase
+      .from("org_user_assignments")
+      .upsert({ user_id: user.id, org_id: org.id });
+
+    if (!error) {
+      setMyOrgIds((prev) => {
+        const next = new Set(prev);
+        next.add(org.id);
+        return next;
+      });
+    } else {
+      console.log("follow error:", error);
+    }
+  }
+
+const updatedAll = orgState.sortedOrgs.filter((o) => o.id !== org.id);
+  const newVisible = updatedAll.slice(0, 3);
+  setOrgState((prev) => ({
+    ...prev,
+    sortedOrgs: updatedAll,
+    visibleOrgs: newVisible,
+  }));
+
+
+};
 
   /* This fetch is to be used for the main home base screen to retireve org events. Move after merging */
   const fetchCorkboardEntries = async () => {
@@ -275,6 +358,83 @@ to prevent duplicate entries, so this will only work if the user has not already
   useEffect(() => {
     fetchData();
   }, []);
+
+useFocusEffect(
+  useCallback(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.id) return;
+      const { data, error } = await supabase
+        .from('org_user_assignments')
+        .select('org_id, organizations(name, logo)')
+        .eq('user_id', user.id);
+
+      if (!error && !cancelled) {
+        // normalize to [{ id, name, logo }]
+        const list = (data || []).map(r => ({
+          id: r.org_id,
+          name: r.organizations?.name ?? 'Unknown',
+          logo: r.organizations?.logo ?? null,
+        }));
+        setMyOrgs(list);
+        setOrgIdx(0); // start on first org
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id])
+);
+
+const groupByType = (rows=[]) =>
+  rows.reduce((acc, row) => {
+    const key = row.type || 'Other';
+    (acc[key] ||= []).push(row);
+    return acc;
+  }, {});
+
+// If your DB column names differ from what your cards expect, adapt here:
+const toCard = (row) => ({
+  id: row.id,
+  title: row.title,
+  type: row.type,        // e.g. "Resources" | "Skills" | ...
+  date: row.date,        // or row.date_line
+  time: row.time,        // or row.time_line
+  age: row.postedAgo,    // optional “13 mins” style text
+  profilePic: row.profilePic, // optional for Tips
+  location: row.location || null,
+  address: row.address || null,
+});
+
+useEffect(() => {
+  if (!currentOrg) return;
+  if (entriesCache[currentOrg.id]) return; // already have it cached
+
+  (async () => {
+    setLoadingEntries(true);
+    const { data, error } = await supabase
+      .from('corkboard_entries')
+      .select('*')
+      .eq('org_id', currentOrg.id)
+      .order('created_at', { ascending: false });
+
+    setLoadingEntries(false);
+    if (!error) {
+      const cards = (data || []).map(toCard);
+      setEntriesCache(prev => ({
+        ...prev,
+        [currentOrg.id]: groupByType(cards),
+      }));
+    }
+  })();
+}, [currentOrg?.id]);
+
+const nextOrg = () => {
+  if (!myOrgs.length) return;
+  setOrgIdx(i => (i + 1) % myOrgs.length);
+};
+const prevOrg = () => {
+  if (!myOrgs.length) return;
+  setOrgIdx(i => (i - 1 + myOrgs.length) % myOrgs.length);
+};
 
   return (
     <ScrollView>

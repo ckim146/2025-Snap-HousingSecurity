@@ -36,6 +36,11 @@ import andrewpic from "../../assets/andrewbitmoji.png";
 import emmapic from "../../assets/emmabitmoji.png";
 import joepic from "../../assets/joebitmoji.png";
 
+//IMPORTING ORGANIZATION PROFILE PICTURES
+import spypic from "../../assets/spypicture.png";
+import helpinghandspic from "../../assets/helpinghandspicture.png";
+import bandgpic from "../../assets/bandgpicture.png";
+
 //SWIPEABLE STACK COMPONENT
 import SwipableStack from "../components/SwipableStack";
 import EntryInfo from "../components/EntryInfo";
@@ -54,9 +59,16 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
   const [currType, setCurrType] = useState(null);
-  const [currOrgIndex, setCurrOrgIndex] = useState(0);
+    const [currOrgIndex, setCurrOrgIndex] = useState(0);
   const [userOrgs, setUserOrgs] = useState([]);
   const { user } = useAuthentication();
+
+//added
+  const entriesKeys = Object.keys(entriesByCat || {});
+const tipsKey =
+  entriesKeys.find(k => (k || "").trim().toLowerCase() === "tips") || null;
+
+
   const currOrg = 3;
   const grouped = {};
 
@@ -184,6 +196,7 @@ export default function HomeBaseScreen({ route, navigation }) {
     }
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
+
 
     setTypes(typeList); // store only the array of types
 
@@ -460,7 +473,11 @@ export default function HomeBaseScreen({ route, navigation }) {
                     /* open profile */
                   }}
                 >
-                  <View style={styles.avatar} />
+                  <Image
+                    source={alexpic}
+                    style={styles.avatarImg}
+                    resizeMode="cover"
+                  />
                 </Pressable>
               </View>
 
@@ -721,21 +738,80 @@ export default function HomeBaseScreen({ route, navigation }) {
                           <SwipableStack
                             cardData={items}
                             fadeToggle={() => fadeToggle(type)}
-                            colorMap={colorCategoryMap}
+                            
                           />
                         </View>
+
+                        
                       </View>
                     ))}
-                    {/* <StickyCard
-                      variant="post"
-                      category="tips"
-                      org="Andrew"
-                      avatarUri={andrewpic}
-                      title="Shelters full at St Josephs. OPCC has a few left."
-                      postedAgo="1 hr ago"
-                      tag="TIPS"
-                      views={31}
-                    /> */}
+
+                    {!tipsKey && (
+    <View style={styles.slotWrap}>
+      <Text style={styles.slotLabel}>tips</Text>
+      <StickyCard
+        category="tips"
+        org="Member"
+        title="Emma"
+        avatarUri={emmapic}
+        timeLine="New food vouchers at the front desk."
+        postedAgo="16 mins ago"
+        showBack
+        showPin
+      />
+    </View>
+  )}
+                    {/* <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Resources</Text>
+                    <StickyCard
+                      category="resources"
+                      city="Santa Monica"
+                      title="Free Haircuts"
+                      dateLine="Fri, 8/15"
+                      timeLine="12–4 pm"
+                      postedAgo="13 mins ago"
+                      onPress={() =>
+                        handleCardTouch({ title: "Free Haircuts" })
+                      }
+                    />
+                  </View>
+
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Skills</Text>
+                    <StickyCard
+                      category="skills"
+                      city="Santa Monica"
+                      title="Resume Workshop"
+                      dateLine="Wed, 8/20"
+                      timeLine="12–1 pm"
+                      postedAgo="1 day ago"
+                      onPress={() =>
+                        handleCardTouch({ title: "Resume Workshop" })
+                      }
+                    />
+                  </View>
+
+                  <View style={styles.slotWrap}>
+                    <Text style={styles.slotLabel}>Social</Text>
+                    <StickyCard
+                      category="social"
+                      city="Venice"
+                      title="Mural Painting"
+                      dateLine="Tue, 8/19"
+                      timeLine="10–4 pm"
+                      postedAgo="51 mins ago"
+                    />
+                  </View>
+
+                  
+
+                  <View style={styles.stickyNote}>
+                    <Text style={styles.noteTitle}>Backpack Giveaway</Text>
+                    <Text style={styles.noteDate}>Sat, 8/24</Text>
+                    <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
+                  </View> */}
+
+                    {/* You can add more sticky notes or map over an array */}
                   </View>
                 </Animated.View>
               </View>
@@ -789,6 +865,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                       variant="post"
                       category="resources"
                       org="Helping Hands"
+                      avatarUri={helpinghandspic}
                       title="Free hygiene kits and dental check ups today. Come join us."
                       postedAgo="53 mins ago"
                       tag="RESOURCES"
@@ -811,6 +888,7 @@ export default function HomeBaseScreen({ route, navigation }) {
                       variant="post"
                       category="skills"
                       org="Boys & Girls Club"
+                      avatarUri={bandgpic}
                       title="Workshop: How to build an online Portfolio. Hosted by Snapchat!"
                       postedAgo="29 mins ago"
                       tag="DEVELOPMENT"
@@ -825,7 +903,17 @@ export default function HomeBaseScreen({ route, navigation }) {
                       title="Shelters full at St Josephs. OPCC has a few left."
                       postedAgo="1 hr ago"
                       tag="TIPS"
-                      views={31}
+                      views={36}
+                    />
+                    <StickyCard
+                      variant="post"
+                      category="social"
+                      org="Safe Place for Youth"
+                      avatarUri={spypic}
+                      title="Mural painting at SPY today! Come join us for food and a creative time!"
+                      postedAgo="6 hrs ago"
+                      tag="SOCIAL"
+                      views={55}
                     />
                   </View>
                 </View>
@@ -1190,8 +1278,19 @@ const styles = StyleSheet.create({
 
   h1: { color: "#fff", fontSize: 28, fontWeight: "800" },
   subtitle: { color: "#fff", opacity: 0.9, marginTop: 6, textAlign: "center" },
-  avatarBtn: { height: 40, width: 40, borderRadius: 20, overflow: "hidden" },
-  avatar: { flex: 1, backgroundColor: "#ffd66b" }, // replace with <Image> if you have one
+  avatarBtn: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#eec86f",
+  },
+  avatar: { flex: 1, backgroundColor: "#eec86fff" }, // replace with <Image> if you have one
+  avatarImg: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 20, // ALEX PROFILE PIC ON TOP RIGHT
+  },
   segment: {
     flexDirection: "row",
     alignSelf: "center",
