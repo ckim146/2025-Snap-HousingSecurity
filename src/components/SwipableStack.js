@@ -41,11 +41,7 @@ export default function SwipableStack({
   navigation,
   cardData,
   fadeToggle,
-  isMyOrgs = false,
-  userOrgs = [],
-  activeOrgName = "",
-  onPrevOrg,
-  onNextOrg,
+  colorMap
 }) {
   const [visible, setVisible] = useState(false);
   const [orgs, setOrgs] = useState([]);
@@ -65,7 +61,7 @@ export default function SwipableStack({
     orgContainerVisible: false,
   });
   //put into card copmponent
-  // const [cards, setCards] = useState(orgCardData);
+  const [cards, setCards] = useState(orgCardData);
   const [cardIndex, setCardIndex] = useState(0);
   const [popupX, setPopupX] = useState(null);
   const [popupY, setPopupY] = useState(null);
@@ -120,18 +116,7 @@ export default function SwipableStack({
     },
   ];
 
-  //Put into card component later
-  const colorCategoryMap = {
-    workshop: "rgba(255, 211, 216, 1)",
-    event: "rgb(203, 249, 228)",
-    Tips: "rgb(255, 226, 186)",
-    volunteer: "rgb(235, 215, 254)",
-  };
-
-
-
-  //added 
-  const NOTE_COLORS = {
+    const NOTE_COLORS = {
   resources: { paper: "#DFF6EE", accent: "#1A9E74", arrowBg: "#F5FFFC" },
   skills:    { paper: "#FADDE1", accent: "#C44A65", arrowBg: "#FFF1F4" },
   social:    { paper: "#E5D5FF", accent: "#5C3FBF", arrowBg: "#F6F2FF" },
@@ -146,8 +131,8 @@ const typeToNote = (t = "") => {
   return "resources";
 };
 
-
-
+  //Put into card component later
+  const colorCategoryMap = colorMap;
   function toggleEntryInfoVisible() {
     setDetailsVisible(true);
   }

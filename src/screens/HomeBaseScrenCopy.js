@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
+import { useState } from "react";
 
 import { Card, FAB } from "@rn-vui/themed";
 import {
@@ -24,11 +24,23 @@ import Color from "color";
 import pictureofmyorg from "../../assets/pictureofmyorg.png";
 import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
-import { useHeaderHeight } from "@react-navigation/elements";
-
-import SwipableStack from "../components/SwipableStack";
 import ResourceExpand from "../components/ResourceExpand";
 import cardProfilePic from "../../assets/cardProfilePic.png";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
+
+//IMPORTING BITMOJI AVATAR PICTURES
+import lesliepic from "../../assets/lesliebitmoji.png";
+import alexpic from "../../assets/alexbitmoji.png";
+import amberpic from "../../assets/amberbitmoji.png";
+import andrewpic from "../../assets/andrewbitmoji.png";
+import emmapic from "../../assets/emmabitmoji.png";
+import joepic from "../../assets/joebitmoji.png";
+
+//SWIPEABLE STACK COMPONENT
+import SwipableStack from "../components/SwipableStack";
+import EntryInfo from "../components/EntryInfo";
+
+import { useHeaderHeight } from "@react-navigation/elements";
 
 export default function HomeBaseScreen({ route, navigation }) {
   const [visible, setVisible] = useState(false);
@@ -41,24 +53,39 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [orgCardData, setOrgCardData] = useState(orgCardDataRaw);
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
-  const [currType, setCurrType] = useState(null)
+  const [currType, setCurrType] = useState(null);
+  const [currOrgIndex, setCurrOrgIndex] = useState(0);
+  const [userOrgs, setUserOrgs] = useState([]);
+  const { user } = useAuthentication();
   const currOrg = 3;
   const grouped = {};
 
   //to fit image in the main page of homebase
-  const { width: heroW, height: heroH } =
-    Image.resolveAssetSource(pictureofmyorg);
-  const HERO_RATIO = heroW / heroH;
+  // const { width: heroW, height: heroH } =
+  //   Image.resolveAssetSource(pictureofmyorg);
+  // const HERO_RATIO = heroW / heroH;
+  const [feedTab, setFeedTab] = useState("My Orgs");
+
+  const isMyOrgs = feedTab === "My Orgs";
+  const isAllPosts = feedTab === "All Posts";
+  const heroSource = isMyOrgs ? pictureofmyorg : pictureofallposts;
+  const { width: hw, height: hh } = Image.resolveAssetSource(heroSource);
+  const HERO_RATIO = hw / hh;
   //header is inside
   const headerHeight = useHeaderHeight();
 
-  const [feedTab, setFeedTab] = useState("My Orgs");
   //Put into card component later
   const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
+    seminar: "rgba(255, 211, 216, 1)", // same as workshop
     event: "rgb(203, 249, 228)",
+    festival: "rgb(203, 249, 228)", // same as event
     Tips: "rgb(255, 226, 186)",
+    activity: "rgb(255, 226, 186)",
     volunteer: "rgb(235, 215, 254)",
+    info: "rgb(235, 215, 254)",
+    support: "rgba(115, 118, 255, 1)",
+    social: "rgba(213, 255, 63, 1)",
   };
   // palette per category
   const NOTE_COLORS = {
@@ -136,19 +163,20 @@ export default function HomeBaseScreen({ route, navigation }) {
     const { data, error } = await supabase
       .from("corkboard_entries")
       .select("*")
-      .eq("org_id", currOrg);
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
 
     if (error) {
       console.error("Error fetching entries:", error);
       return;
     }
+
     setOrgCardData(data);
 
     // Get all distinct types
     const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
       .select("type", { distinct: true })
-      .eq("org_id", currOrg);
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
 
     if (typeError) {
       console.error("Error fetching distinct types:", typeError);
@@ -156,29 +184,47 @@ export default function HomeBaseScreen({ route, navigation }) {
     }
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
-    console.log("typeList", typeList);
+
     setTypes(typeList); // store only the array of types
 
     // Build grouped object using data & typeList directly
-
+    const grouped = {};
     for (const type of typeList) {
       grouped[type] = data.filter((item) => item.type === type);
     }
-
     setEntriesByCat(grouped);
   };
 
   //If the user adds/removes an org or if a different org is selectred, refetch entries
   useEffect(() => {
-    if (currOrg) {
+    if (userOrgs[currOrgIndex]) {
       fetchOrgEntries();
     }
-  }, []);
+  }, [userOrgs, currOrgIndex]);
+
+  //Fetch the orgs that the user is a part of
+  const fetchUserOrgs = async () => {
+    const { data, error } = await supabase
+      .from("org_user_assignments")
+      .select(`org_id, organizations(name, logo)`);
+    // .eq("user_id", user.id);
+    if (!error) setUserOrgs(data);
+  };
+
+  //On load, run fetchUserOrgs if a valid user id exists
+  useEffect(() => {
+    (async () => {
+      if (user?.id) return;
+      fetchUserOrgs();
+    })();
+  }, [user?.id]);
+
   //Animation values for expanded/stacks transition
   const stacksOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
   const fadeToggle = (type) => {
+    console.log(userOrgs);
     setCurrType(type);
     if (showExpaned) {
       // Fade back to slotWraps
@@ -266,39 +312,119 @@ export default function HomeBaseScreen({ route, navigation }) {
   }, []);
   // contentContainerStyle={{ paddingTop: headerHeight + 8  }}
 
+  const onSelectFeed = (tab) => {
+    if (tab === "My Orgs") {
+      setFeedTab("My Orgs");
+      navigation.navigate("CorkBoardScreen"); // <- go to corkboard
+    } else {
+      setFeedTab("All Posts"); // stay on this screen
+    }
+  };
+
   function StickyCard({
     category = "resources",
-    city,
+    org,
     title,
     dateLine,
     timeLine,
     postedAgo,
     onPress,
+    variant = "note",
+    showBack = false,
+    showPin = false,
+    avatarUri,
+    tag,
+    views = 0,
   }) {
     const c = NOTE_COLORS[category] || NOTE_COLORS.resources;
+    const isPost = variant === "post";
+    const imgSource =
+      typeof avatarUri === "string" ? { uri: avatarUri } : avatarUri;
     return (
       <Pressable style={styles.noteWrap} onPress={onPress}>
-        <View style={[styles.noteBack, { backgroundColor: c.back }]} />
-        <View style={[styles.stickyNoteCard, { backgroundColor: c.paper }]}>
-          <View style={styles.pin} />
-          {city ? <Text style={styles.cityText}>{city}</Text> : null}
-          <Text style={styles.noteTitleBig} numberOfLines={2}>
-            {title}
-          </Text>
-          {dateLine ? (
-            <Text style={[styles.whenBold, { color: c.accent }]}>
-              {dateLine}
-            </Text>
-          ) : null}
-          {timeLine ? <Text style={styles.whenSub}>{timeLine}</Text> : null}
-          <View style={styles.noteBottomRow}>
-            {postedAgo ? <Text style={styles.agoText}>{postedAgo}</Text> : null}
-            <Pressable onPress={fadeToggle}>
-              <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
-                <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+        {!isPost && showBack && (
+          <View style={[styles.noteBack, { backgroundColor: c.back }]} />
+        )}
+
+        <View
+          style={[
+            styles.stickyNoteCard,
+            { backgroundColor: c.paper },
+            isPost && styles.postCard, // extra inner bottom space
+          ]}
+        >
+          {!isPost && showPin && <View style={styles.pin} />}
+
+          {/* {!!city && (
+          <Text style={isPost ? styles.postCity : styles.cityText}>{city}</Text>
+        )} */}
+
+          {/* <Text
+          style={isPost ? styles.postTitle : styles.noteTitleBig}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {title}
+        </Text> */}
+
+          {isPost ? (
+            <>
+              {/* header: avatar + org */}
+              <View style={styles.postHeaderRow}>
+                {avatarUri ? (
+                  <Image source={imgSource} style={styles.avatar32} />
+                ) : (
+                  <View style={[styles.avatar32, styles.avatarPlaceholder]} />
+                )}
+                <Text
+                  style={styles.orgName}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {org}
+                </Text>
               </View>
-            </Pressable>
-          </View>
+
+              {/* body */}
+              <Text style={styles.postBody} numberOfLines={4}>
+                {title}
+              </Text>
+
+              {/* time */}
+              {!!postedAgo && <Text style={styles.postAgo}>{postedAgo}</Text>}
+
+              {/* bottom meta */}
+              <View style={styles.metaRow}>
+                {!!tag && (
+                  <View style={styles.tagPill}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                )}
+                <View style={styles.eyeRow}>
+                  <IonIcon name="eye-outline" size={16} color="#6b5b4b" />
+                  <Text style={styles.eyeCount}>{views}</Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <>
+              {!!org && <Text style={styles.cityText}>{org}</Text>}
+              <Text style={styles.noteTitleBig}>{title}</Text>
+              {!!dateLine && (
+                <Text style={[styles.whenBold, { color: c.accent }]}>
+                  {dateLine}
+                </Text>
+              )}
+              {!!timeLine && <Text style={styles.whenSub}>{timeLine}</Text>}
+
+              <View style={styles.noteBottomRow}>
+                {!!postedAgo && <Text style={styles.agoText}>{postedAgo}</Text>}
+                <View style={[styles.arrowBtn, { backgroundColor: c.arrowBg }]}>
+                  <IonIcon name="arrow-forward" size={18} color="#6b6b6b" />
+                </View>
+              </View>
+            </>
+          )}
         </View>
       </Pressable>
     );
@@ -310,8 +436,8 @@ export default function HomeBaseScreen({ route, navigation }) {
         {/* HERO */}
         <View style={styles.heroWrap}>
           <ImageBackground
-            source={pictureofmyorg}
-            style={[styles.hero, { aspectRatio: HERO_RATIO }]} // width 100% + aspectRatio => perfect fit
+            source={heroSource}
+            style={[styles.hero, { height: 380 }]} // width 100% + aspectRatio => perfect fit, aspectRatio: HERO_RATIO,
             imageStyle={styles.heroImage} // bottom-only radius (optional)
             resizeMode="cover"
           >
@@ -384,23 +510,36 @@ export default function HomeBaseScreen({ route, navigation }) {
                 <Pressable
                   style={[styles.arrowAbs, styles.arrowLeft]}
                   onPress={() => {
-                    /* prev */
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex =
+                        (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                      return nextIndex;
+                      console.log("Previous org index:", nextIndex);
+                    });
                   }}
                 >
                   <IonIcon name="chevron-back" size={26} color="#fff" />
                 </Pressable>
                 {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
-                <View style={styles.spyBubble}>
+                <Image
+                  source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
+                {/* <View style={styles.spyBubble}>
                   <Text style={styles.spyBubbleText}>
                     S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
                   </Text>
                   <Text style={styles.spyBubbleSub}>safe place for youth</Text>
-                </View>
+                  
+                </View> */}
                 {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
                 <Pressable
                   style={[styles.arrowAbs, styles.arrowRight]}
                   onPress={() => {
-                    /* next */
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex = (prevIndex + 1) % userOrgs.length;
+                      return nextIndex;
+                    });
                   }}
                 >
                   <IonIcon name="chevron-forward" size={26} color="#fff" />
@@ -409,10 +548,21 @@ export default function HomeBaseScreen({ route, navigation }) {
               </View>
 
               {/* dots */}
-              <View style={styles.dotsRow}>
+              {/* <View style={styles.dotsRow}>
                 <View style={[styles.dot, styles.dotActive]} />
                 <View style={styles.dot} />
                 <View style={styles.dot} />
+              </View> */}
+              <View style={styles.dotsRow}>
+                {userOrgs.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      index === currOrgIndex && styles.dotActive,
+                    ]}
+                  />
+                ))}
               </View>
 
               {/* your original All / Orgs pill */}
@@ -464,289 +614,246 @@ export default function HomeBaseScreen({ route, navigation }) {
         </View>
 
         {/* overlapping brown sheet header */}
-        <View style={styles.sheetHeader}>
-          <Text style={styles.sheetTitle}>Safe Place for Youth</Text>
-          <Text style={styles.sheetSub}>Welcome to our resource board!</Text>
+        <View style={[styles.sheetHeader, { marginTop: -40 }]}>
+          <Text style={styles.sheetTitle}>
+            {isMyOrgs
+              ? userOrgs[currOrgIndex]?.organizations.name
+              : "Venice, CA"}
+          </Text>
+          <Text style={styles.sheetSub}>
+            {isMyOrgs
+              ? "Welcome to our resource board!"
+              : "Public resource board for your area."}
+          </Text>
         </View>
 
         {/* corkboard */}
 
+        {/* Filter Tabs */}
+
         <View style={styles.corkBoardContainer}>
-          {/* <View style={styles.corkBoardBanner}>
-            <View style={styles.cardHeader}>
-              <View style={styles.textColumn}>
-                <Text style={styles.bannerTitle}>Cork Board</Text>
-                <Text style={styles.bannerSubtitle}>
-                  Posts and tips from your local orgs
-                </Text>
-              </View> */}
-          {/* <Pressable
-                onPress={() => navigation.navigate("CorkBoardScreen")}
-                style={{ marginLeft: "auto" }}
+          {isMyOrgs ? (
+            <View style={styles.corkBoardCard}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterTabs}
               >
-                <IonIcon
-                  name="chevron-forward-outline"
-                  size={32}
-                  color="white"
-                />
-              </Pressable> */}
-          {/* </View>
-          </View> */}
-          {/* Filter Tabs */}
+                {/* search circle goes first */}
 
-          <View style={styles.corkBoardCard}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterTabs}
-            >
-              {/* 
-  Scalability 
-  Not focusing the prototype 
-  Focus on explaining features and functionality
-  safety and protocols
-  Engineers:
-  orgs choose what they want to share, their corkboard their posts
-  Features / Safety / Functionality
-  NO PROTOTYPE -> Features, Process 
-
-  Designers:
-  speak on the feature 
-  corboard and maps
-
-  Storytellers:
-  personas
-  timeline
-  partenerships
-  scalability
-  
-  check for resets 
-  
-  figure out workflow situation 
-  */}
-
-              {/* search circle goes first */}
-              <Pressable
-                style={styles.filterSearch}
-                onPress={() => navigation.navigate("Search")}
-              >
-                <IonIcon name="search" size={20} color="#5b432f" />
-              </Pressable>
-              {[
-                "Help with bills",
-                "Transportation",
-                "HELP REQUESTS",
-                "ANNOUNCEMENTS",
-              ].map((tab, i) => (
                 <Pressable
-                  key={i}
-                  style={[styles.tab, i === 0 && styles.activeTab]}
+                  style={styles.filterSearch}
+                  onPress={() => navigation.navigate("Search")}
                 >
-                  <Text
-                    style={[styles.tabText, i === 0 && styles.activeTabText]}
+                  <IonIcon name="search" size={20} color="#5b432f" />
+                </Pressable>
+                {[
+                  "Help with bills",
+                  "Transportation",
+                  "HELP REQUESTS",
+                  "ANNOUNCEMENTS",
+                ].map((tab, i) => (
+                  <Pressable
+                    key={i}
+                    style={[styles.tab, i === 0 && styles.activeTab]}
                   >
-                    {tab}
-                  </Text>
-                </Pressable>
-              ))}
-              <View style={{ width: 8 }} />
-            </ScrollView>
+                    <Text
+                      style={[styles.tabText, i === 0 && styles.activeTabText]}
+                    >
+                      {tab}
+                    </Text>
+                  </Pressable>
+                ))}
+                <View style={{ width: 8 }} />
+              </ScrollView>
 
-            <View style={styles.stickyNoteGrid}>
-              {/* Big container for all expanded cards */}
-              <Animated.View
-                style={{
-                  opacity: expandedOpacity,
-                  position: "absolute",
-                  top: 30,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  paddingTop: 40,
-                }}
+              <View style={styles.stickyNoteGrid}>
+                {/* Big container for all expanded cards */}
+                <Animated.View
+                  style={{
+                    opacity: expandedOpacity,
+                    position: "absolute",
+                    top: 30,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    paddingTop: 40,
+                  }}
+                >
+                  <Pressable
+                    style={[
+                      styles.arrowAbs,
+                      styles.arrowRight,
+                      { top: 10, left: 10, position: "absolute", zIndex: 10 },
+                    ]}
+                    onPress={fadeToggle}
+                  >
+                    <IonIcon name="arrow-back" size={26} color="black" />
+                  </Pressable>
+                  <FlatList
+                    data={entriesByCat[currType]}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item, index }) => (
+                      <View
+                        style={{
+                          flexDirection: "column",
+                          minHeight: 150,
+                          width: "100%",
+                          marginBottom: 10, // add spacing between cards
+                        }}
+                      >
+                        <ResourceExpand
+                          typeColor={colorCategoryMap[currType]}
+                          cardData={item}
+                        />
+                      </View>
+                    )}
+                  />
+                </Animated.View>
+                <Animated.View style={{ opacity: stacksOpacity }}>
+                  {/** Big container for all swipable cards */}
+
+                  <View style={styles.slotWrapContainer}>
+                    {Object.entries(entriesByCat).map(([type, items]) => (
+                      <View style={styles.slotWrap}>
+                        <Text style={styles.slotLabel}>{type}</Text>
+                        <View key={type} style={{ marginBottom: 20 }}>
+                          <SwipableStack
+                            cardData={items}
+                            fadeToggle={() => fadeToggle(type)}
+                            colorMap={colorCategoryMap}
+                          />
+                        </View>
+                      </View>
+                    ))}
+                    {/* <StickyCard
+                      variant="post"
+                      category="tips"
+                      org="Andrew"
+                      avatarUri={andrewpic}
+                      title="Shelters full at St Josephs. OPCC has a few left."
+                      postedAgo="1 hr ago"
+                      tag="TIPS"
+                      views={31}
+                    /> */}
+                  </View>
+                </Animated.View>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.corkBoardCard}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterTabs}
               >
                 <Pressable
-                  style={[
-                    styles.arrowAbs,
-                    styles.arrowRight,
-                    { top: 10, left: 10, position: "absolute", zIndex: 10 },
-                  ]}
-                  onPress={fadeToggle}
+                  style={styles.filterSearch}
+                  onPress={() => navigation.navigate("Search")}
                 >
-                  <IonIcon name="arrow-back" size={26} color="black" />
+                  <IonIcon name="search" size={20} color="#5b432f" />
                 </Pressable>
-                <FlatList
-                  data={entriesByCat[currType]}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({ item, index }) => (
-                    <View
-                      style={{
-                        flexDirection: "column",
-                        minHeight: 150,
-                        width: "100%",
-                        marginBottom: 10, // add spacing between cards
-                      }}
+
+                {["All", "Shelters", "Resources", "Tips"].map((tab, i) => (
+                  <Pressable
+                    key={i}
+                    style={[styles.tab, i === 0 && styles.activeTab]}
+                  >
+                    <Text
+                      style={[styles.tabText, i === 0 && styles.activeTabText]}
                     >
-                      <ResourceExpand
-                        typeColor={colorCategoryMap[currType]}
-                        cardData={item}
-                      />
-                    </View>
-                  )}
-                />
-              </Animated.View>
-              <Animated.View style={{ opacity: stacksOpacity }}>
-                {/** Big container for all swipable cards */}
+                      {tab}
+                    </Text>
+                  </Pressable>
+                ))}
+                <View style={{ width: 8 }} />
+              </ScrollView>
 
-                <View style={styles.slotWrapContainer}>
-                  {Object.entries(entriesByCat).map(([type, items]) => (
-                    <View style={styles.slotWrap}>
-                     <Text style={styles.slotLabel}>{type}</Text>
-                    <View key={type} style={{ marginBottom: 20 }}>
-                      <SwipableStack cardData={items} fadeToggle={() => fadeToggle(type)} />
-                    </View>
-                    </View>
-                  ))}
-                  {/* <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Resources</Text>
+              {/* <View style={styles.stickyNoteGrid}>
+                <View style={styles.slotWrap}> */}
+              <View style={styles.cardsWrap}>
+                <View style={styles.masonryRow}>
+                  <View style={[styles.col, styles.colLeft, { marginTop: 30 }]}>
                     <StickyCard
-                      category="resources"
-                      city="Santa Monica"
-                      title="Free Haircuts"
-                      dateLine="Fri, 8/15"
-                      timeLine="12–4 pm"
-                      postedAgo="13 mins ago"
-                      onPress={() =>
-                        handleCardTouch({ title: "Free Haircuts" })
-                      }
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Skills</Text>
-                    <StickyCard
-                      category="skills"
-                      city="Santa Monica"
-                      title="Resume Workshop"
-                      dateLine="Wed, 8/20"
-                      timeLine="12–1 pm"
-                      postedAgo="1 day ago"
-                      onPress={() =>
-                        handleCardTouch({ title: "Resume Workshop" })
-                      }
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Social</Text>
-                    <StickyCard
-                      category="social"
-                      city="Venice"
-                      title="Mural Painting"
-                      dateLine="Tue, 8/19"
-                      timeLine="10–4 pm"
-                      postedAgo="51 mins ago"
-                    />
-                  </View>
-
-                  <View style={styles.slotWrap}>
-                    <Text style={styles.slotLabel}>Tips</Text>
-                    <StickyCard
+                      variant="post"
                       category="tips"
-                      city="Member"
-                      title="Emma"
-                      timeLine="New food vouchers at the front desk."
-                      postedAgo="16 mins ago"
+                      org="Leslie"
+                      avatarUri={lesliepic}
+                      title="Don’t camp near Hill St. The city is removing all tents."
+                      postedAgo="13 mins ago"
+                      tag="TIPS"
+                      views={2}
+                    />
+
+                    <StickyCard
+                      variant="post"
+                      category="resources"
+                      org="Helping Hands"
+                      title="Free hygiene kits and dental check ups today. Come join us."
+                      postedAgo="53 mins ago"
+                      tag="RESOURCES"
+                      views={22}
+                    />
+                    <StickyCard
+                      variant="post"
+                      category="tips"
+                      org="Joe"
+                      avatarUri={joepic}
+                      title="24 hour fitness is open 24/7 now. Show your ID for free entry."
+                      postedAgo="3 hrs ago"
+                      tag="TIPS"
+                      views={31}
                     />
                   </View>
 
-                  <View style={styles.stickyNote}>
-                    <Text style={styles.noteTitle}>Backpack Giveaway</Text>
-                    <Text style={styles.noteDate}>Sat, 8/24</Text>
-                    <Text style={styles.noteInfo}>11am–2pm • Local Org</Text>
-                  </View> */}
+                  <View style={[styles.col, styles.colLeft, { marginTop: 30 }]}>
+                    <StickyCard
+                      variant="post"
+                      category="skills"
+                      org="Boys & Girls Club"
+                      title="Workshop: How to build an online Portfolio. Hosted by Snapchat!"
+                      postedAgo="29 mins ago"
+                      tag="DEVELOPMENT"
+                      views={10}
+                    />
 
-                  {/* You can add more sticky notes or map over an array */}
+                    <StickyCard
+                      variant="post"
+                      category="tips"
+                      org="Andrew"
+                      avatarUri={andrewpic}
+                      title="Shelters full at St Josephs. OPCC has a few left."
+                      postedAgo="1 hr ago"
+                      tag="TIPS"
+                      views={31}
+                    />
+                  </View>
                 </View>
-              </Animated.View>
+              </View>
             </View>
-          </View>
-
-          {/* MAP CARD */}
-          {/* <View style={styles.MapCard}>
-        
-        <View style={styles.cardHeader}>
-        <Text style={[styles.header, { flex: 1, paddingVertical: 0}]}>Map</Text>
-                <Pressable //Arrow Icon
-          onPress={() => navigation.navigate("UserTab", {screen: "Map"})}
-          style={{ marginLeft: "auto" }}
-        >
-          <IonIcon name="chevron-forward-outline" size={32} color="black" />
-        </Pressable>
+          )}
         </View>
 
-      </View> */}
-
-          <ScrollView>
-            <View style={styles.Events}>
-              {/* {orgs.map((event) => (
-
-            <TouchableOpacity
-              key={event.id}
-              onPress={() => handleCardTouch(event)}
-              style={styles.container}
-            >
-              <View style={styles.friends}>
-                <Text style={styles.friendsText}>
-                  {event.attending} friends going
-                </Text>
-              </View>
-              <Image
-                style={{
-                  width: "100%",
-                  aspectRatio: 1,
-                  borderRadius: 20,
-                  objectFit: "cover",
-                }}
-                resizeMode="contain"
-                source={{ uri: event.imageURL }}
-              />
-              <Card.Title style={styles.title}>{event.title}</Card.Title>
-              <View style={styles.userInfo}>
-                <Image
-                  style={styles.bitmojiUser}
-                  source={{
-                    uri: "https://sdk.bitmoji.com/render/panel/20048676-103221902646_4-s5-v1.png?transparent=1&palette=1&scale=1",
-                  }}
-                />
-                <Text style={styles.username}>{event.host}</Text>
-              </View>
-            </TouchableOpacity>
-          ))} */}
-            </View>
-          </ScrollView>
-
-          {/* THE BLUE ADD BUTTON */}
-          {/* <FAB
+        {/* THE BLUE ADD BUTTON */}
+        {/* <FAB
             onPress={toggleComponent}
             style={styles.addButton}
             visible={true}
             icon={{ name: "add", color: "white" }}
             color="#334effff"
           /> */}
-          <AddEvent
-            isVisible={visible}
-            onClose={() => {
-              toggleComponent();
-              refreshEvents();
-            }}
-          />
-          {/* <EventInfo
+        <AddEvent
+          isVisible={visible}
+          onClose={() => {
+            toggleComponent();
+            refreshEvents();
+          }}
+        />
+        {/* <EventInfo
             isVisible={detailsVisible}
             event={selectedEvent}
             onClose={() => setDetailsVisible(false)}
           /> */}
-        </View>
       </ScrollView>
     </View>
   );
@@ -807,91 +914,23 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: "#fff",
   },
-  textColumn: {
-    flexDirection: "column", // stack vertically
-    gap: 4, // spacing between title + subtitle
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
 
-  bitmojiUser: {
-    width: 28,
-    aspectRatio: 1,
-    borderRadius: 1000,
-    margin: 0,
-  },
   title: {
     textAlign: "left",
     marginTop: 8,
     marginBottom: 5,
     fontSize: 15,
   },
-  userInfo: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    margin: 0,
-  },
-  friends: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 100,
-    backgroundColor: "#fffc00",
-    margin: 0,
-    borderRadius: 20,
-    padding: 10,
-  },
-  friendsText: {
-    fontWeight: "bold",
-    fontSize: 10,
-  },
-  username: {
-    fontSize: 11,
-    margin: 0,
-    fontWeight: "bold",
-    color: "#575757",
-  },
+
   // addButton: {
   //   position: "absolute",
   //   bottom: 16,
   //   right: 20,
   // },
-  EventScreen: {
-    height: "100%",
-  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  mainHeader: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginLeft: 40,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  bottomHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingTop: 12,
-  },
-
-  topBannerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 30,
-    paddingTop: 40,
   },
 
   spyLogoContainer: { alignItems: "center", justifyContent: "center" },
@@ -939,14 +978,18 @@ const styles = StyleSheet.create({
   },
   sheetTitle: { color: "#fff", fontSize: 22, fontWeight: "800" },
   sheetSub: { color: "#f5e9dc", marginTop: 4 },
-
-  noteWrap: { width: "100%", position: "relative" },
-
+  //CODE GO BACK - 100%
+  noteWrap: {
+    width: "100%",
+    position: "relative",
+    marginBottom: 14, // vertical space between cards
+  },
+  // postWrap: { width: "100%" },
   noteBack: {
     position: "absolute",
     top: -3,
     left: -3,
-    right: -0.5,
+    right: -3,
     bottom: -3,
     borderRadius: 9, // <= back sheet
     transform: [{ rotate: "-6deg" }], // a little tilt, not too curvy
@@ -956,6 +999,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
+
   noteBottomRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1061,8 +1105,8 @@ const styles = StyleSheet.create({
   },
 
   stickyNoteCard: {
-    height: 175, // ← hard-coded height (try 180–200)
-    borderRadius: 16,
+    // height: 175, // ← hard-coded height (try 180–200) CODE GO BACK
+    borderRadius: 20,
     // width: 164,
     padding: 16,
     shadowColor: "#000",
@@ -1072,7 +1116,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     // marginHorizontal: 0.5,
     // marginLeft:0,
-    marginRight: 1,
+    // marginRight: 1,
   },
   pin: {
     position: "absolute",
@@ -1292,8 +1336,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  //MY ORGS STICKY NOTE STYLES
   slotWrap: {
-    width: "47.9%", // <-- was "47%": makes the card skinny
+    width: "48%", // <-- was "47%": makes the card skinny
     marginBottom: 18,
   },
   slotLabel: {
@@ -1306,6 +1351,99 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.25)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  // make the All Posts card have a bit more bottom padding
+  postCard: {
+    paddingBottom: 20, // 👈 space under the bottom row
+    shadowOpacity: 0.08,
+  },
+
+  // All Posts type
+  postCity: { fontSize: 12, color: "#8a8a8a", marginBottom: 2 },
+  postTitle: {
+    fontSize: 16,
+    fontWeight: "400", // 👈 not bold; change to "500" if you want a touch heavier
+    lineHeight: 20,
+    color: "#1f1f1f",
+    marginBottom: 10,
+  },
+  postAgo: { fontSize: 12, color: "#7a7a7a" },
+
+  postHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  avatar32: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.06)",
+  },
+  orgName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#4b3d33",
+    flexShrink: 1, // allow shrink when space is tight
+    flexWrap: "wrap",
+  },
+
+  postBody: {
+    fontSize: 16, // not bold
+    lineHeight: 22,
+    color: "#2a2a2a",
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  postAgo: { fontSize: 12, color: "#8f7f72", marginBottom: 10 },
+
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  tagPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(75,61,51,0.25)",
+    backgroundColor: "rgba(255,255,255,0.6)",
+  },
+  tagText: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+    color: "#6b5b4b",
+  },
+  eyeRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  eyeCount: { fontSize: 13, color: "#6b5b4b", fontWeight: "600" },
+
+  // small label used by corkboard
+  cityText: { fontSize: 12, color: "#7a7a7a", marginBottom: 4 },
+
+  masonryRow: {
+    flexDirection: "row",
+    // alignItems: "flex-start",
+    justifyContent: "space-between",
+    // gap: 14, // horizontal space between the two columns
+    paddingHorizontal: 12,
+    overflow: "visible", // clips the edges of the cards
+    paddingRight: 6,
+  },
+  col: { width: "48%" },
+  colLeft: { marginLeft: -8 },
+  colRight: { marginRight: -8 },
+  cardsWrap: {
+    marginHorizontal: -13,
+    overflow: "visible",
+  },
+  avatar32: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.06)", // safe fallback
   },
   slotWrapContainer: {
     flexDirection: "row",
