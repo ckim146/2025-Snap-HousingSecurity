@@ -61,7 +61,7 @@ export default function SwipableStack({
     orgContainerVisible: false,
   });
   //put into card copmponent
-  // const [cards, setCards] = useState(orgCardData);
+  const [cards, setCards] = useState(orgCardData);
   const [cardIndex, setCardIndex] = useState(0);
   const [popupX, setPopupX] = useState(null);
   const [popupY, setPopupY] = useState(null);
