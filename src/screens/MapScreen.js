@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   Pressable,
   ScrollView,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -26,6 +28,7 @@ import useCorkboardEvents from "../utils/hooks/GetCorkboardEvents";
 import { useAuthentication } from "../utils/hooks/useAuthentication";
 import { useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import EntryInfo from "../components/EntryInfo";
 
 export default function MapScreen({ navigation }) {
   const tabBarHeight = useBottomTabBarHeight();
@@ -43,7 +46,22 @@ export default function MapScreen({ navigation }) {
   const [markerLocation, setMarkerLocation] = useState({});
   const route = useRoute();
   const [isActive, setIsActive] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   // const { userOrgs, entries, loading } = useCorkboardEvents(3);
+
+  const colorCategoryMap = {
+    workshop: "rgba(255, 211, 216, 1)",
+    seminar: "rgba(255, 211, 216, 1)", // same as workshop
+    event: "rgb(203, 249, 228)",
+    festival: "rgb(203, 249, 228)", // same as event
+    Tips: "rgb(255, 226, 186)",
+    activity: "rgb(255, 226, 186)",
+    volunteer: "rgb(235, 215, 254)",
+    info: "rgb(235, 215, 254)",
+    support: "rgba(115, 118, 255, 1)",
+    social: "rgba(213, 255, 63, 1)",
+  };
 
   const placeId = "ChIJcyHa9fOAhYAR7reGSUvtLe4"; // Replace with your place_id
 
@@ -190,8 +208,8 @@ export default function MapScreen({ navigation }) {
   const fetchUserOrgs = async () => {
     const { data, error } = await supabase
       .from("org_user_assignments")
-      .select(`org_id, organizations(name, logo)`)
-      // .eq("user_id", user.id);
+      .select(`org_id, organizations(name, logo)`);
+    // .eq("user_id", user.id);
     if (!error) setUserOrgs(data);
   };
 
@@ -291,6 +309,11 @@ export default function MapScreen({ navigation }) {
     setModalVisible(true);
   };
 
+  const handleMarkerPress = (marker) => {
+    setSelectedEvent(marker); // store the tapped marker's data
+    setIsVisible(true); // show popup
+  };
+
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -336,6 +359,7 @@ export default function MapScreen({ navigation }) {
     setHomeBaseMode(!homeBaseMode);
     console.log("marker locs", markerLocations);
   };
+  
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -375,25 +399,70 @@ export default function MapScreen({ navigation }) {
             </Marker>
           )}
           {/* adding markers to the map */}
-          {markerLocations?.map((marker, index) => {
-            if (homeBaseMode)
-            {return (
+          {homeBaseMode &&
+            entries?.map((entry) => (
               <Marker
-                key={`${marker.id}`}
+                key={entry.id}
                 coordinate={{
-                  latitude: marker.latitude,
-                  longitude: marker.longitude,
+                  latitude: entry.location.latitude,
+                  longitude: entry.location.longitude,
                 }}
-                onPress={() => console.log("Marker pressed:", marker.title)}
+                onPress={() => handleMarkerPress(entry)} // Pass full entry
               >
                 <View style={styles.iconWrapper}>
                   <Ionicons name="location-sharp" size={30} color="#FF5733" />
                 </View>
               </Marker>
-            );}
-          })}
+            ))}
+
+          {/**Info overlay */}
+          {/* {isVisible && selectedEvent && (
+            <View style={{ display: 'flex' }}>
+              <EntryInfo
+                event={selectedEvent}
+                isVisible={isVisible}
+                onClose={() => {setSelectedEvent(null)}}
+                typeColor={colorCategoryMap[selectedEvent.type]}
+              />
+            </View>
+          )} */}
+          {isVisible && (
+                  <Modal
+                    transparent
+                    visible={isVisible}
+                    animationType="fade"
+                    onRequestClose={() => setIsVisible(false)}
+                  >
+                    {/* full-screen overlay that closes popup when tapped */}
+                    {/* <TouchableWithoutFeedback onPress={() => setIsVisible(false)}>
+                      <View style={styles.overlay} />
+                    </TouchableWithoutFeedback> */}
+          
+                    {/* Positioned popup that exactly matches card location/size */}
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      {/* Make EntryInfo fill this container */}
+                      <EntryInfo
+                        isVisible={isVisible}
+                        event={selectedEvent}
+                        typeColor={colorCategoryMap[selectedEvent.type]}
+                        // org="Youth Forward"
+                        onClose={() => setIsVisible(false)}
+                      />
+                    </View>
+                  </Modal>
+                )}
         </MapView>
-        <View style={styles.overlay} />
+        {homeBaseMode && <View style={styles.overlay} pointerEvents="none" />}
         {/*Button to toggle home base mode*/}
         {/* <View style={styles.homeBaseToggleButton}>
           <Button
@@ -453,46 +522,49 @@ export default function MapScreen({ navigation }) {
             </TouchableOpacity>
           </View>
           {/*Panel that displays the org name and left right arrow buttons*/}
-          { homeBaseMode && <View style={styles.orgPanel}>
-            <View style={styles.orgScroller}>
-              <Pressable
-                onPress={() => {
-                  setCurrOrgIndex((prevIndex) => {
-                    const nextIndex =
-                      (prevIndex - 1 + userOrgs.length) % userOrgs.length;
-                    return nextIndex;
-                    console.log("Previous org index:", nextIndex);
-                  });
-                }}
-              >
-                <Ionicons
-                  name="chevron-back-outline"
-                  size={20}
-                  color="black"
-                  style={{ alignSelf: "flex-end" }}
+          {homeBaseMode && (
+            <View style={styles.orgPanel}>
+              <View style={styles.orgScroller}>
+                <Pressable
+                  onPress={() => {
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex =
+                        (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                      return nextIndex;
+                      console.log("Previous org index:", nextIndex);
+                    });
+                  }}
+                >
+                  <Ionicons
+                    name="chevron-back-outline"
+                    size={20}
+                    color="black"
+                    style={{ alignSelf: "flex-end" }}
+                  />
+                </Pressable>
+                <Image
+                  style={styles.orgImage}
+                  source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
                 />
-              </Pressable>
-              <Image
-                style={styles.orgImage}
-                source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
-              />
-              <Pressable
-                onPress={() => {
-                  setCurrOrgIndex((prevIndex) => {
-                    const nextIndex = (prevIndex + 1) % userOrgs.length;
-                    return nextIndex;
-                  });
-                }}
-              >
-                <Ionicons
-                  name="chevron-forward-outline"
-                  size={20}
-                  color="black"
-                  style={{ alignSelf: "flex-end" }}
-                />
-              </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex = (prevIndex + 1) % userOrgs.length;
+                      return nextIndex;
+                    });
+                  }}
+                >
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color="black"
+                    style={{ alignSelf: "flex-end" }}
+                  />
+                </Pressable>
+              </View>
+              <Text>{userOrgs[currOrgIndex]?.organizations.name}</Text>
             </View>
-          </View> }
+          )}
           <View style={[styles.bitmojiContainer, styles.shadow]}>
             <Pressable
               onPress={() => {
@@ -721,6 +793,7 @@ const styles = StyleSheet.create({
     elevation: 10,
     width: "100%",
     height: 100,
+    flexDirection: "column",
   },
   orgScroller: {
     flexDirection: "row",
@@ -749,8 +822,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "white",
   },
-    overlay: {
+  overlay: {
     ...StyleSheet.absoluteFillObject, // Covers entire map
-    backgroundColor: "rgba(0, 0, 0, 0.3)", // Change RGBA for tint color & opacity
+    backgroundColor: "rgba(255, 37, 37, 0.11)", // Change RGBA for tint color & opacity
   },
 });
