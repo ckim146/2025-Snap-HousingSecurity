@@ -67,7 +67,7 @@ export default function ProfileScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
           <View // Mini container for the icon
             style={{
-              backgroundColor: "lightgrey",
+              backgroundColor: "transparent",
               borderRadius: 20,
               padding: 10,
               marginRight: 8, // small space between icon and text
@@ -83,14 +83,14 @@ export default function ProfileScreen() {
           <View //Mini container for the main text and subtext
             style={{ flexDirection: "column", justifyContent: "flex-start" }}
           >
-            <Text style={[styles.cardHeader, { marginTop: 0 }]}>Homebase</Text>
+            <Text style={[styles.cardHeader, { marginTop: 0 }]}>Follow an Organization</Text>
             <Text style={{ fontSize: 12, color: "grey" }}>
-              You're home.
+              Get a look into community resources
             </Text>
           </View>
         </View>
         <View style={styles.newFeatureLabel}>
-          <Text style={styles.newFeatureText}>New Feature</Text>
+          <Text style={styles.newFeatureText}>New</Text>
         </View>
         <Pressable //Arrow Icon
           onPress={() => navigation.navigate("Notifications")}
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     fontSize: 17,
-    textAlign: "center",
+    textAlign: "flex-start",
     paddingLeft: 0,
   },
   avatar: {

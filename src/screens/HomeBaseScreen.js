@@ -26,6 +26,7 @@ import pictureofallposts from "../../assets/pictureofallposts.png";
 import { LinearGradient } from "expo-linear-gradient";
 import ResourceExpand from "../components/ResourceExpand";
 import cardProfilePic from "../../assets/cardProfilePic.png";
+import { useAuthentication } from "../utils/hooks/useAuthentication";
 
 //IMPORTING BITMOJI AVATAR PICTURES
 import lesliepic from "../../assets/lesliebitmoji.png";
@@ -58,6 +59,9 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [types, setTypes] = useState([]);
   const [entriesByCat, setEntriesByCat] = useState({});
   const [currType, setCurrType] = useState(null);
+    const [currOrgIndex, setCurrOrgIndex] = useState(0);
+  const [userOrgs, setUserOrgs] = useState([]);
+  const { user } = useAuthentication();
 
   //added
   const entriesKeys = Object.keys(entriesByCat || {});
@@ -84,9 +88,15 @@ export default function HomeBaseScreen({ route, navigation }) {
   //Put into card component later
   const colorCategoryMap = {
     workshop: "rgba(255, 211, 216, 1)",
+    seminar: "rgba(255, 211, 216, 1)", // same as workshop
     event: "rgb(203, 249, 228)",
-    tips: "rgb(255, 226, 186)",
+    festival: "rgb(203, 249, 228)", // same as event
+    Tips: "rgb(255, 226, 186)",
+    activity: "rgb(255, 226, 186)",
     volunteer: "rgb(235, 215, 254)",
+    info: "rgb(235, 215, 254)",
+    support: "rgba(115, 118, 255, 1)",
+    social: "rgba(213, 255, 63, 1)",
   };
   // palette per category
   const NOTE_COLORS = {
@@ -164,7 +174,7 @@ export default function HomeBaseScreen({ route, navigation }) {
     const { data, error } = await supabase
       .from("corkboard_entries")
       .select("*")
-      .eq("org_id", currOrg);
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
 
     if (error) {
       console.error("Error fetching entries:", error);
@@ -177,7 +187,7 @@ export default function HomeBaseScreen({ route, navigation }) {
     const { data: typeData, error: typeError } = await supabase
       .from("corkboard_entries")
       .select("type", { distinct: true })
-      .eq("org_id", currOrg);
+      .eq("org_id", userOrgs[currOrgIndex].org_id);
 
     if (typeError) {
       console.error("Error fetching distinct types:", typeError);
@@ -185,6 +195,7 @@ export default function HomeBaseScreen({ route, navigation }) {
     }
 
     const typeList = [...new Set(typeData.map((item) => item.type))];
+
 
     setTypes(typeList); // store only the array of types
 
@@ -198,16 +209,34 @@ export default function HomeBaseScreen({ route, navigation }) {
 
   //If the user adds/removes an org or if a different org is selectred, refetch entries
   useEffect(() => {
-    if (currOrg) {
+    if (userOrgs[currOrgIndex]) {
       fetchOrgEntries();
     }
-  }, []);
+  }, [userOrgs, currOrgIndex]);
+
+  //Fetch the orgs that the user is a part of
+  const fetchUserOrgs = async () => {
+    const { data, error } = await supabase
+      .from("org_user_assignments")
+      .select(`org_id, organizations(name, logo)`);
+    // .eq("user_id", user.id);
+    if (!error) setUserOrgs(data);
+  };
+
+  //On load, run fetchUserOrgs if a valid user id exists
+  useEffect(() => {
+    (async () => {
+      if (user?.id) return;
+      fetchUserOrgs();
+    })();
+  }, [user?.id]);
 
   //Animation values for expanded/stacks transition
   const stacksOpacity = useRef(new Animated.Value(1)).current;
   const expandedOpacity = useRef(new Animated.Value(0)).current;
 
   const fadeToggle = (type) => {
+    console.log(userOrgs);
     setCurrType(type);
     if (showExpaned) {
       // Fade back to slotWraps
@@ -493,46 +522,69 @@ export default function HomeBaseScreen({ route, navigation }) {
 
               {/* S.P.Y bubble w/ arrows */}
               {/* <View style={styles.carouselRow}> */}
-              {isMyOrgs && (
-                <>
-                  <View style={styles.spyBubbleWrap}>
-                    <Pressable
-                      style={[styles.arrowAbs, styles.arrowLeft]}
-                      onPress={() => {
-                        /* prev */
-                      }}
-                    >
-                      <IonIcon name="chevron-back" size={26} color="#fff" />
-                    </Pressable>
-                    {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
-                    <View style={styles.spyBubble}>
-                      <Text style={styles.spyBubbleText}>
-                        S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
-                      </Text>
-                      <Text style={styles.spyBubbleSub}>
-                        safe place for youth
-                      </Text>
-                    </View>
-                    {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
-                    <Pressable
-                      style={[styles.arrowAbs, styles.arrowRight]}
-                      onPress={() => {
-                        /* next */
-                      }}
-                    >
-                      <IonIcon name="chevron-forward" size={26} color="#fff" />
-                    </Pressable>
-                    {/* </View> */}
-                  </View>
 
-                  {/* dots */}
-                  <View style={styles.dotsRow}>
-                    <View style={[styles.dot, styles.dotActive]} />
-                    <View style={styles.dot} />
-                    <View style={styles.dot} />
-                  </View>
-                </>
-              )}
+
+              {isMyOrgs && ( 
+
+                <>
+              <View style={styles.spyBubbleWrap}>
+                <Pressable
+                  style={[styles.arrowAbs, styles.arrowLeft]}
+                  onPress={() => {
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex =
+                        (prevIndex - 1 + userOrgs.length) % userOrgs.length;
+                      return nextIndex;
+                      console.log("Previous org index:", nextIndex);
+                    });
+                  }}
+                >
+                  <IonIcon name="chevron-back" size={26} color="#fff" />
+                </Pressable>
+                {/* <IonIcon name="chevron-back" size={26} color="#fff" /> */}
+                <Image
+                  source={{ uri: userOrgs[currOrgIndex]?.organizations.logo }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
+                {/* <View style={styles.spyBubble}>
+                  <Text style={styles.spyBubbleText}>
+                    S. P. <Text style={{ color: "#00BFFF" }}>Y</Text>
+                  </Text>
+                  <Text style={styles.spyBubbleSub}>safe place for youth</Text>
+                  
+                </View> */}
+                {/* <IonIcon name="chevron-forward" size={24} color="#fff" /> */}
+                <Pressable
+                  style={[styles.arrowAbs, styles.arrowRight]}
+                  onPress={() => {
+                    setCurrOrgIndex((prevIndex) => {
+                      const nextIndex = (prevIndex + 1) % userOrgs.length;
+                      return nextIndex;
+                    });
+                  }}
+                >
+                  <IonIcon name="chevron-forward" size={26} color="#fff" />
+                </Pressable>
+                {/* </View> */}
+              </View>
+
+              {/* dots */}
+              {/* <View style={styles.dotsRow}>
+                <View style={[styles.dot, styles.dotActive]} />
+                <View style={styles.dot} />
+                <View style={styles.dot} />
+              </View> */}
+              <View style={styles.dotsRow}>
+                {userOrgs.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      index === currOrgIndex && styles.dotActive,
+                    ]}
+                  />
+                ))}
+              </View>
 
               {/* your original All / Orgs pill */}
               {/* <View style={[styles.toggleContainer, { marginTop: 12 }]}>
@@ -578,14 +630,19 @@ export default function HomeBaseScreen({ route, navigation }) {
               >
                 <IonIcon name="search" size={22} color="#111" />
               </Pressable> */}
+              </>
+              )}
             </View>
+            
           </ImageBackground>
         </View>
 
         {/* overlapping brown sheet header */}
         <View style={[styles.sheetHeader, { marginTop: -40 }]}>
           <Text style={styles.sheetTitle}>
-            {isMyOrgs ? "Safe Place for Youth" : "Venice, CA"}
+            {isMyOrgs
+              ? userOrgs[currOrgIndex]?.organizations.name
+              : "Venice, CA"}
           </Text>
           <Text style={styles.sheetSub}>
             {isMyOrgs
@@ -688,6 +745,8 @@ export default function HomeBaseScreen({ route, navigation }) {
                           <SwipableStack
                             cardData={items}
                             fadeToggle={() => fadeToggle(type)}
+                            colorMap={colorCategoryMap}
+                            
                           />
                         </View>
                       </View>
@@ -949,91 +1008,23 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: "#fff",
   },
-  textColumn: {
-    flexDirection: "column", // stack vertically
-    gap: 4, // spacing between title + subtitle
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
 
-  bitmojiUser: {
-    width: 28,
-    aspectRatio: 1,
-    borderRadius: 1000,
-    margin: 0,
-  },
   title: {
     textAlign: "left",
     marginTop: 8,
     marginBottom: 5,
     fontSize: 15,
   },
-  userInfo: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    margin: 0,
-  },
-  friends: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 100,
-    backgroundColor: "#fffc00",
-    margin: 0,
-    borderRadius: 20,
-    padding: 10,
-  },
-  friendsText: {
-    fontWeight: "bold",
-    fontSize: 10,
-  },
-  username: {
-    fontSize: 11,
-    margin: 0,
-    fontWeight: "bold",
-    color: "#575757",
-  },
+
   // addButton: {
   //   position: "absolute",
   //   bottom: 16,
   //   right: 20,
   // },
-  EventScreen: {
-    height: "100%",
-  },
   header: {
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",
-  },
-  mainHeader: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "left",
-    marginLeft: 40,
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  bottomHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingTop: 12,
-  },
-
-  topBannerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 30,
-    paddingTop: 40,
   },
 
   spyLogoContainer: { alignItems: "center", justifyContent: "center" },
