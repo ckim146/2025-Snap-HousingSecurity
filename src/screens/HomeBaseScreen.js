@@ -59,11 +59,10 @@ export default function HomeBaseScreen({ route, navigation }) {
   const [entriesByCat, setEntriesByCat] = useState({});
   const [currType, setCurrType] = useState(null);
 
-//added
+  //added
   const entriesKeys = Object.keys(entriesByCat || {});
-const tipsKey =
-  entriesKeys.find(k => (k || "").trim().toLowerCase() === "tips") || null;
-
+  const tipsKey =
+    entriesKeys.find((k) => (k || "").trim().toLowerCase() === "tips") || null;
 
   const currOrg = 3;
   const grouped = {};
@@ -689,29 +688,26 @@ const tipsKey =
                           <SwipableStack
                             cardData={items}
                             fadeToggle={() => fadeToggle(type)}
-                            
                           />
                         </View>
-
-                        
                       </View>
                     ))}
 
                     {!tipsKey && (
-    <View style={styles.slotWrap}>
-      <Text style={styles.slotLabel}>tips</Text>
-      <StickyCard
-        category="tips"
-        org="Member"
-        title="Emma"
-        avatarUri={emmapic}
-        timeLine="New food vouchers at the front desk."
-        postedAgo="16 mins ago"
-        showBack
-        showPin
-      />
-    </View>
-  )}
+                      <View style={styles.slotWrap}>
+                        <Text style={styles.slotLabel}>tips</Text>
+                        <StickyCard
+                          category="tips"
+                          org="Member"
+                          title="Emma"
+                          avatarUri={emmapic}
+                          timeLine="New food vouchers at the front desk."
+                          postedAgo="16 mins ago"
+                          showBack
+                          showPin
+                        />
+                      </View>
+                    )}
                     {/* <View style={styles.slotWrap}>
                     <Text style={styles.slotLabel}>Resources</Text>
                     <StickyCard
